@@ -8,8 +8,8 @@ Elle fait suite à くらべよう (https://kookafr.github.io/kurabe/) et repren
 
 | Onglet | Contenu |
 |---|---|
-| **きょう** | L'activité en cours en grand (「いま」), la suivante (「つぎ」), puis la liste de la journée. Le bouton 「おわった」 coche l'activité, puis propose une photo pour la ふりかえり. |
-| **こんしゅう** | La semaine. 「がっこうだけ」 montre le 時間割 (une colonne par jour sur iPad, une ligne d'images par jour sur téléphone) ; 「ぜんぶ」 ajoute la maison. |
+| **きょう** | L'activité en cours en grand (「いま」), la suivante (「つぎ」), puis 「これからの よてい」, regroupé par moment de la journée (朝 6じ〜, 昼 10じ〜, 午後 2じ〜, 夜 6じ〜). Ce qui est fini est rangé dessous, replié : 「おわった こと」. Le bouton 「おわった」 coche l'activité, puis propose une photo pour la ふりかえり. |
+| **こんしゅう** | La semaine, du plus simple au plus détaillé. 「かんたん」 : pour chaque jour, une barre des lieux de 6 h à 22 h (maison orange, école bleu, dehors vert), la même échelle pour tous les jours, et dessous seulement ce qu'il ne faut pas oublier (jour férié, événements, activités importantes ou inhabituelles). Toucher un lieu montre ses activités, toucher le jour ouvre son programme. 「くわしく」 ajoute les images de chaque moment. |
 | **こんげつ** | Le calendrier du mois : dimanche et jours fériés en rouge, samedi en bleu ; les événements ; 「あと 3にち」 pour les prochains. |
 | **てじゅん** | Les étapes d'une activité, une seule à la fois, avec la frise et un « bravo » à la fin (朝の したく, 手を 洗う, 明日の 準備…). |
 | **ふりかえり** | Le soir : chaque activité faite, avec sa photo, l'heure, une phrase au passé (「作業を しました。」) et 「どうだった？」 (楽しかった, ふつう, つかれた, いやだった). À la fin, 「おくる」 fait une image de la journée à envoyer à la famille (LINE, e-mail). |
@@ -30,7 +30,8 @@ Elle fait suite à くらべよう (https://kookafr.github.io/kurabe/) et repren
 - **Calendrier** : événements (avec « pas d'école »), jours fériés japonais calculés automatiquement, vacances habituelles des écoles de Tokyo en un bouton (à vérifier avec le calendrier de l'école).
 - **Étapes** : créer et modifier les てじゅん, avec émoji ou photo pour chaque étape.
 - **Cartes et photos** : créer des cartes avec une vraie photo (le bus de l'école, la デイサービス…), ou mettre une photo sur une carte existante ; choisir le lieu, la phrase du soir, les étapes liées, et ne pas proposer de photo (toilettes, bain…).
-- **Ce que l'enfant peut changer** : rien, ajouter des activités, ou ajouter et déplacer les activités sans heure.
+- **Ce que l'enfant peut changer** : rien, ajouter des activités, ou ajouter et déplacer les activités sans heure. Pour ajouter, il choisit le jour (きょう, あした, …), le moment (つぎ, 朝, 昼, 午後, 夜) et la carte ; le bouton dit ce qui va se passer (「あしたの ごごに いれる」).
+- **Activités importantes** : une case sur chaque carte (遠足, 実習, 病院… le sont déjà) ; elles ressortent dans la semaine, comme les activités ajoutées pour une seule date.
 - **Sauvegarde** : un fichier `.json` pour passer le même emploi du temps du téléphone à l'iPad (photos des cartes et des étapes comprises).
 
 Le texte japonais s'écrit en hiragana, ou en kanji suivis de leur lecture : `作業《さぎょう》 学習《がくしゅう》`. Un espace entre les mots aide à lire (分かち書き).

@@ -369,13 +369,23 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 }
 .chip-on { background: var(--action); border-color: var(--action); color: var(--action-texte); }
 
-/* Semaine : une ligne par jour sur téléphone */
+/* Semaine : une ligne par jour, la barre des lieux de 6 h à 22 h */
 .page-semaine, .page-mois, .page-recit, .page-etapes { display: flex; flex-direction: column; gap: 10px; }
+.legende-lieux { list-style: none; margin: 0; padding: 0; display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 14px; font-weight: 700; font-size: .9em; }
+.legende-lieux li { display: flex; align-items: center; gap: 6px; }
+.legende-lieux li::before { content: ""; width: 18px; height: 18px; border-radius: 5px; background: var(--lieu); }
+.legende-lieux i, .bloc i, .retenir i, .echelle-moment i { font-style: normal; font-family: var(--emoji); }
+.legende-lieux i { order: -1; }
 .semaine { display: flex; flex-direction: column; gap: 8px; }
+.sem-echelle, .sem-jour { display: grid; grid-template-columns: 4em 1fr; gap: 0 10px; }
+.sem-echelle { padding: 4px 10px 0 2px; position: sticky; top: -14px; z-index: 2; background: var(--papier); }
+.echelle-corps { display: grid; grid-template-columns: repeat(4, 1fr); padding-bottom: 4px; }
+.echelle-moment { display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; font-size: .85em; border-left: 2px solid var(--ligne); line-height: 1.15; }
+.echelle-moment > span { display: flex; align-items: center; gap: 2px; }
+.echelle-moment small { font-size: .82em; color: var(--encre-douce); }
+.echelle-moment:first-child { border-left: 0; }
+.echelle-moment ruby rt { font-size: .55em; }
 .sem-jour {
-  display: grid;
-  grid-template-columns: 4.2em 1fr;
-  gap: 0 10px;
   align-items: stretch;
   border: 2px solid var(--ligne);
   border-radius: 16px;
@@ -383,59 +393,123 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
   overflow: hidden;
 }
 .sem-jour.aujourdhui { border: 4px solid var(--action); }
-.sem-jour.passe { opacity: .6; }
-.sem-jour.sans-ecole { background: repeating-linear-gradient(135deg, var(--surface) 0 12px, var(--papier) 12px 24px); }
+.sem-jour.passe { opacity: .55; }
+.sem-jour.sans-ecole .sem-tete { background: repeating-linear-gradient(135deg, var(--papier) 0 8px, var(--surface) 8px 16px); }
 .sem-tete {
-  grid-row: span 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 0;
   border: 0;
   border-right: 2px solid var(--ligne);
   background: var(--papier);
   padding: 6px 2px;
   color: var(--jour, var(--encre));
 }
-.sem-nom { font-size: 1.4em; font-weight: 700; }
-.sem-date { font-size: .85em; color: var(--encre-douce); }
+.sem-nom { font-size: 1.35em; font-weight: 700; line-height: 1.2; }
+.sem-date { font-size: .82em; color: var(--encre-douce); }
 .sem-auj { font-size: .7em; font-weight: 700; color: var(--action); }
-.sem-etiquettes { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 6px 0 0; }
-.pastille { padding: 2px 8px; border-radius: 999px; background: var(--papier); border: 1px solid var(--bord); font-size: .78em; font-weight: 700; }
-.pastille-ferie { color: var(--dimanche); border-color: var(--dimanche); }
-.sem-items { list-style: none; margin: 0; padding: 6px 6px 6px 0; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; cursor: pointer; }
-.sem-item { display: flex; align-items: center; }
-.sem-item .visuel { font-size: 1.35em; width: 1.6em; height: 1.6em; border-radius: 10px; background: var(--lieu-fond); border-bottom: 4px solid var(--lieu); }
-.sem-item .sem-heure, .sem-item .sem-item-nom, .sem-item .sem-fait { display: none; }
-.sem-item.statut-fait .visuel { opacity: .55; }
-.sem-vide { color: var(--encre-douce); font-weight: 700; padding: 8px 4px; }
-
-/* Grand écran : une colonne par jour (le vrai 時間割) */
-@media (min-width: 760px) {
-  .vue > .page-semaine { max-width: 1400px; }
-  .semaine { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; align-items: start; }
-  .sem-jour { display: flex; flex-direction: column; }
-  .sem-tete { flex-direction: row; gap: 6px; border-right: 0; border-bottom: 2px solid var(--ligne); padding: 8px 4px; }
-  .sem-nom { font-size: 1.2em; }
-  .sem-etiquettes { padding: 6px 6px 0; }
-  .sem-items { flex-direction: column; align-items: stretch; flex-wrap: nowrap; padding: 6px; gap: 4px; }
-  .sem-item {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    grid-template-areas: "v h" "v n";
-    gap: 0 6px;
-    padding: 4px 6px;
-    border-left: 5px solid var(--lieu);
-    border-radius: 8px;
-    background: var(--lieu-fond);
-    font-size: .85em;
-  }
-  .sem-item .visuel { grid-area: v; font-size: 1.2em; background: none; border: 0; }
-  .sem-item .sem-heure { display: block; grid-area: h; font-weight: 700; color: var(--encre-douce); font-size: .9em; }
-  .sem-item .sem-item-nom { display: block; grid-area: n; font-weight: 700; line-height: 1.2; }
-  .sem-item .heure small { font-size: .7em; }
+.sem-corps { min-width: 0; padding: 8px 8px 8px 0; display: flex; flex-direction: column; gap: 6px; }
+.barre-lieux { position: relative; height: 44px; border-radius: 10px; background: var(--papier); border: 2px solid var(--ligne); overflow: hidden; }
+.bloc {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 0 2px;
+  border: 0;
+  border-right: 2px solid var(--surface);
+  background: var(--lieu);
+  color: #fff;
+  overflow: hidden;
 }
+.bloc i { font-size: 1.25em; line-height: 1; filter: drop-shadow(0 0 2px rgba(0, 0, 0, .25)); }
+.bloc-etroit i { display: none; }
+.bloc-nom { display: none; font-weight: 700; font-size: .85em; white-space: nowrap; }
+.tic { position: absolute; top: 0; bottom: 0; border-left: 2px dashed var(--bord); opacity: .5; pointer-events: none; z-index: 1; }
+.ligne-maintenant { position: absolute; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: var(--danger); z-index: 2; pointer-events: none; box-shadow: 0 0 0 1px var(--surface); }
+.barre-vide { position: absolute; inset: 0; display: grid; place-items: center; color: var(--encre-douce); font-weight: 700; font-size: .9em; }
+.a-retenir { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.retenir {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 2px solid var(--lieu, var(--bord));
+  border-radius: 999px;
+  background: var(--lieu-fond, var(--surface));
+  font-weight: 700;
+  font-size: .9em;
+  line-height: 1.2;
+}
+.retenir i { font-size: 1.2em; }
+.retenir small { color: var(--encre-douce); font-weight: 700; }
+.retenir-ferie { --lieu: var(--dimanche); color: var(--dimanche); background: var(--surface); }
+.retenir-evenement { --lieu: #d99a00; --lieu-fond: #fff4cf; color: #3d2c00; }
+.retenir-plus { color: var(--encre-douce); }
+.sem-moments { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border-top: 2px dashed var(--ligne); padding-top: 6px; }
+.sem-moment { list-style: none; margin: 0; padding: 0 2px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 3px; border-left: 2px solid var(--ligne); min-height: 2em; }
+.sem-moment:first-child { border-left: 0; }
+.sem-item { display: flex; align-items: center; position: relative; }
+.sem-item .visuel { font-size: 1.1em; width: 1.7em; height: 1.7em; border-radius: 8px; background: var(--lieu-fond); border-bottom: 4px solid var(--lieu); }
+.sem-item-texte, .sem-fait { display: none; }
+.sem-item.statut-fait .visuel, .sem-item.statut-passe .visuel { opacity: .5; }
+
+/* Grand écran : les noms dans la barre et sous chaque moment */
+@media (min-width: 700px) {
+  .sem-echelle, .sem-jour { grid-template-columns: 5.5em 1fr; }
+  .barre-lieux { height: 52px; }
+  .bloc-nom { display: inline; }
+  .bloc-etroit .bloc-nom { display: none; }
+  .sem-moment { flex-direction: column; flex-wrap: nowrap; gap: 4px; padding: 0 6px; }
+  .sem-item { gap: 6px; padding: 3px 6px; border-left: 5px solid var(--lieu); border-radius: 8px; background: var(--lieu-fond); }
+  .sem-item .visuel { background: none; border: 0; width: 1.5em; height: 1.5em; }
+  .sem-item-texte { display: flex; flex-direction: column; font-weight: 700; font-size: .82em; line-height: 1.2; min-width: 0; }
+  .sem-item-texte small { color: var(--encre-douce); font-size: .85em; }
+}
+.detail-bloc-heures { display: flex; align-items: center; gap: 8px; font-size: 1.2em; font-weight: 700; padding: 8px 12px; border-radius: 12px; background: var(--lieu-fond); border-left: 8px solid var(--lieu); margin-bottom: 10px; }
+.detail-bloc-heures i { font-style: normal; font-family: var(--emoji); font-size: 1.3em; }
+
+/* きょう : les moments de la journée, et 「おわった こと」 replié */
+.moments { display: flex; flex-direction: column; gap: 4px; }
+.moment-titre { display: flex; align-items: center; gap: 8px; margin: 8px 0 2px; font-size: 1em; color: var(--encre-douce); }
+.moment-titre small { font-size: .85em; }
+.moment-emoji { font-family: var(--emoji); font-size: 1.2em; }
+.titre-finies {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  margin-top: 8px;
+  padding: 0 14px;
+  border: 2px dashed var(--bord);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--bon);
+  font-weight: 700;
+  font-size: 1.05em;
+  text-align: left;
+}
+.titre-finies > span:nth-child(2) { flex: 1; color: var(--encre); }
+.titre-finies svg { width: 26px; height: 26px; }
+.nb-finies { min-width: 2em; padding: 0 .5em; border-radius: 999px; background: var(--bon-fond); text-align: center; }
+.fleche-finies { color: var(--encre-douce); display: flex; }
+
+/* Choisir quand (jour et moment) */
+.choix-quand { display: flex; flex-direction: column; gap: 6px; padding-bottom: 6px; border-bottom: 2px solid var(--ligne); }
+.cq-label { font-weight: 700; }
+.cq-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.cq-chips .chip { flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; padding: 4px .9em; color: var(--jour, inherit); }
+.cq-chips .chip small { font-size: .7em; font-weight: 400; }
+.cq-chips .chip span { font-family: var(--emoji); }
+.cq-chips .chip-on { color: var(--action-texte); }
+.choix-pied .btn > span { white-space: normal; }
 
 /* Mois */
 .prochains { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
@@ -594,6 +668,7 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .feuille-tete { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .feuille-titre { flex: 1; font-size: 1.3em; min-width: 0; }
 .btn-fermer { margin-left: auto; width: 52px; height: 52px; }
+.actions-feuille .btn > span { white-space: normal; }
 .actions-feuille { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 14px; }
 .detail-tete { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 18px; background: var(--lieu-fond); border: 3px solid var(--lieu); }
 .detail-nom { font-size: 1.5em; font-weight: 700; line-height: 1.2; }
@@ -791,4 +866,16 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 }
 @media (max-width: 359px) {
   .lecteur-pied .btn svg { display: none; }
+}
+
+/* Échelle de la semaine sur téléphone étroit */
+.echelle-moment > span { white-space: nowrap; }
+@media (max-width: 400px) {
+  .echelle-moment { font-size: .78em; }
+  .sem-echelle, .sem-jour { grid-template-columns: 3.4em 1fr; gap: 0 6px; }
+  .sem-nom { font-size: 1.2em; }
+}
+@media (max-width: 359px) {
+  .echelle-moment i { display: none; }
+  .sem-item .visuel { font-size: 1em; }
 }

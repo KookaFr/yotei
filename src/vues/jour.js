@@ -10,10 +10,12 @@ import {
   routine, sorteDuJour,
 } from '../donnees.js';
 import {
-  aujourdhui, cle, deCle, ecartJours, JOURS_SEMAINE, texteDans, texteDuree, versTexte, yomiDans, yomiDate, yomiDuree,
+  aujourdhui, cle, deCle, ecartJours, JOURS_SEMAINE, texteDans, texteDuree, versTexte, yomiDans, yomiDate, yomiDuree, yomiHeure,
 } from '../heure.js';
 import { barre, repereGrandeAiguille, svgHorloge } from '../horloge.js';
-import { deroulement } from '../journee.js';
+import {
+  deroulement, indexPeriode, PERIODES,
+} from '../journee.js';
 import { nav } from '../nav.js';
 import { el } from '../outils.js';
 import { chargerPhotos, nouvellePhoto, supprimerPhoto } from '../photos.js';
@@ -147,6 +149,32 @@ function ligneActivite(d, it) {
   return li;
 }
 
+let voirFinies = false;
+
+// L'heure repère d'un moment : 6じ, 10じ, 2じ (ou 14じ en 24 h).
+export const repereMoment = (p) => {
+  const h = p.debut / 60;
+  return reglages.format24 ? h : (h % 12 || 12);
+};
+
+// La liste groupée par moment de la journée (あさ, ひる, ごご, よる), avec l'heure repère.
+function listeParMoments(d, items) {
+  const bloc = el('div', { class: 'moments' });
+  PERIODES.forEach((p) => {
+    const du = items.filter((it) => it.periode === p.id);
+    if (!du.length) return;
+    const h = repereMoment(p);
+    bloc.append(el('h3', {
+      class: 'moment-titre', 'data-lire': `${lu(p.nom)}。 ${yomiHeure(h)}から`,
+      html: `<span class="moment-emoji" aria-hidden="true">${p.emoji}</span>${html(p.nom)}<small>${h}じ〜</small>`,
+    }));
+    const ol = el('ol', { class: 'liste-jour' });
+    du.forEach((it) => ol.append(ligneActivite(d, it)));
+    bloc.append(ol);
+  });
+  return bloc;
+}
+
 export function rendreJour(conteneur, d = aujourdhui(), { retour = null } = {}) {
   const dr = deroulement(d);
   const k = cle(d);
@@ -168,16 +196,35 @@ export function rendreJour(conteneur, d = aujourdhui(), { retour = null } = {}) 
     if (s) page.append(s);
   }
 
-  const titre = estAuj ? '今日《きょう》の 予定《よてい》' : (dr.passe ? 'この 日《ひ》に した こと' : 'この 日《ひ》の 予定《よてい》');
-  page.append(el('h2', { class: 'titre-liste', 'data-lire': lu(titre), html: html(titre) }));
-  const liste = el('ol', { class: 'liste-jour' });
-  dr.items.forEach((it) => liste.append(ligneActivite(d, it)));
-  page.append(liste);
-  if (!dr.items.length && !estAuj) page.append(el('p', { class: 'vide', html: html('予定《よてい》は ないよ。') }));
+  if (estAuj) {
+    // Aujourd'hui : ce qui reste à faire d'abord ; ce qui est fini en dessous, replié.
+    const aVenir = dr.items.filter((it) => it.statut === 'maintenant' || it.statut === 'avenir');
+    const finies = dr.items.filter((it) => it.statut === 'fait' || it.statut === 'passe');
+    if (aVenir.length) {
+      const titre = finies.length ? 'これからの 予定《よてい》' : '今日《きょう》の 予定《よてい》';
+      page.append(el('h2', { class: 'titre-liste', 'data-lire': lu(titre), html: html(titre) }), listeParMoments(d, aVenir));
+    }
+    if (finies.length) {
+      const ouvert = voirFinies || !aVenir.length;
+      const b = el('button', {
+        type: 'button', class: 'titre-finies', 'aria-expanded': String(ouvert), 'aria-label': `おわった こと、 ${finies.length}こ`,
+        html: `${ICONE_COCHE}<span>${html('おわった こと')}</span><span class="nb-finies">${finies.length}</span>`
+          + `<span class="fleche-finies" aria-hidden="true">${ouvert ? ICONE_HAUT : ICONE_BAS}</span>`,
+      });
+      activable(b, () => { voirFinies = !ouvert; nav.rafraichir(); }, { garde: false });
+      page.append(b);
+      if (ouvert) page.append(listeParMoments(d, finies));
+    }
+  } else {
+    const titre = dr.passe ? 'この 日《ひ》に した こと' : 'この 日《ひ》の 予定《よてい》';
+    page.append(el('h2', { class: 'titre-liste', 'data-lire': lu(titre), html: html(titre) }), listeParMoments(d, dr.items));
+    if (!dr.items.length) page.append(el('p', { class: 'vide', html: html('予定《よてい》は ないよ。') }));
+  }
 
   const pied = el('div', { class: 'pied-jour' });
   if (peutAjouter() && !dr.passe) {
-    pied.append(bouton('予定《よてい》を 入《い》れる', () => ajouter(d, dr), { classe: 'btn', icone: ICONE_PLUS }));
+    const texte = estAuj ? '今日《きょう》の 予定《よてい》を 入《い》れる' : 'この 日《ひ》の 予定《よてい》を 入《い》れる';
+    pied.append(bouton(texte, () => ajouter(d), { classe: 'btn', icone: ICONE_PLUS }));
   }
   if (!dr.items.length || dr.passe || estAuj) {
     if (dr.items.some((it) => it.fait)) pied.append(bouton('ふりかえり', () => nav.recit(d), { classe: 'btn', icone: ICONE_PHOTO }));
@@ -283,22 +330,36 @@ function oublierFait(d, it) {
 
 /* ----- L'élève change sa journée ----- */
 
-function ajouter(d, dr) {
+function ajouter(d) {
   choisirCarte({
     titre: '何《なに》を 入《い》れる？',
-    surChoix: (idCarte) => {
-      const apres = dr.aujourdhui && dr.actuel ? dr.actuel.act.id : null;
-      modifierJour(d, (liste) => {
-        const act = nouvelleActivite(idCarte, '', '', true);
-        const i = apres ? liste.findIndex((x) => x.id === apres) : -1;
-        if (i >= 0) liste.splice(i + 1, 0, act);
-        else liste.push(act);
-      });
-      const nouvelle = deroulement(d).items.find((x) => x.act.parEleve && x.act.carte === idCarte);
+    quand: { date: d },
+    surChoix: (idCarte, { date, moment, texte }) => {
+      inserer(date, idCarte, moment);
+      const c = deroulement(date).items.find((x) => x.act.parEleve && x.act.carte === idCarte);
       sons.succes();
-      parler(`${nouvelle ? nomLu(nouvelle.carte) : ''}を いれたよ。`);
+      parler(`${c ? nomLu(c.carte) : ''}を ${lu(texte)}に いれたよ。`);
+      if (cle(date) !== cle(d)) message(`${texte}に 入《い》れたよ。`);
       nav.rafraichir();
     },
+  });
+}
+
+// Une activité de l'élève : juste après celle en cours (「つぎ」), ou à la fin d'un moment de la journée.
+export function inserer(d, idCarte, moment) {
+  const dr = deroulement(d);
+  modifierJour(d, (liste) => {
+    const act = nouvelleActivite(idCarte, '', '', true);
+    const iActuel = dr.aujourdhui && dr.actuel ? liste.findIndex((x) => x.id === dr.actuel.act.id) : -1;
+    let i;
+    if (moment === 'apres') i = iActuel >= 0 ? iActuel + 1 : liste.length;
+    else {
+      const ip = indexPeriode(moment);
+      const premier = dr.items.find((it) => indexPeriode(it.periode) > ip);
+      i = premier ? liste.findIndex((x) => x.id === premier.act.id) : liste.length;
+      if (iActuel >= 0 && i <= iActuel) i = iActuel + 1;
+    }
+    liste.splice(i, 0, act);
   });
 }
 

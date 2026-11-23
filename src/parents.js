@@ -407,6 +407,8 @@ function editerCarte(c0) {
   routineSel.addEventListener('change', () => { c.routine = routineSel.value || undefined; });
   const sansPhoto = el('input', { type: 'checkbox', checked: Boolean(c.sansPhoto) });
   sansPhoto.addEventListener('change', () => { c.sansPhoto = sansPhoto.checked; });
+  const important = el('input', { type: 'checkbox', checked: Boolean(c.important) });
+  important.addEventListener('change', () => { c.important = important.checked; });
   const photoBtns = el('div', { class: 'p-ligne' });
   const majPhotoBtns = () => {
     photoBtns.replaceChildren(
@@ -434,6 +436,7 @@ function editerCarte(c0) {
     champ(L('Phrase du soir (ふりかえり)', 'ふりかえりの 文'), recit, L('Au passé : ce que l\'enfant a fait.', '「〜しました」の 形で')),
     champ(L('Étapes liées', 'つなぐ てじゅん'), routineSel),
     el('label', { class: 'p-case' }, sansPhoto, el('span', { text: L('Ne pas proposer de photo (toilettes, bain…)', '写真を すすめない（トイレ、おふろなど）') })),
+    el('label', { class: 'p-case' }, important, el('span', { text: L('Important, à ne pas oublier : mis en avant dans 「こんしゅう」', 'わすれては いけない 予定：「こんしゅう」で 目立たせる') })),
   );
   const actions = el('div', { class: 'p-ligne' });
   actions.append(btnP(L('Enregistrer', '保存'), () => {

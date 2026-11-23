@@ -105,9 +105,14 @@ export function sorteDuJour(d) {
 
 export function modeleDu(d) {
   const { sorte } = sorteDuJour(d);
-  if (sorte === 'vacances') return etat.vacances;
   if (sorte === 'modifiee') return etat.jours[cle(d)];
-  return etat.semaine[sorte] || [];
+  return modeleHabituel(d);
+}
+// Le programme habituel de ce jour (sans les changements de cette date) : pour repérer ce qui est inhabituel.
+export function modeleHabituel(d) {
+  const nomFerie = reglages.feries ? ferie(d) : null;
+  if (evenementsDu(d).some((ev) => ev.sansEcole) || (nomFerie && jourIso(d) <= 5)) return etat.vacances;
+  return etat.semaine[String(jourIso(d))] || [];
 }
 
 // Les activités d'une date, triées : celles qui ont une heure par heure, les autres gardent leur place.

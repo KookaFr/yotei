@@ -58,6 +58,7 @@ export function ouvrirFeuille({ titre = '', contenu, classe = '', fermeture = nu
   if (!f.hidden) pile.push({ noeuds: [...boite.childNodes], classe: boite.className, fermeture: surFermeture });
   boite.className = `feuille-boite ${classe}`;
   boite.replaceChildren();
+  boite.scrollTop = 0;
   const tete = el('div', { class: 'feuille-tete' });
   if (titre) tete.append(el('h2', { class: 'feuille-titre', html: html(titre), 'data-lire': lire || lu(titre) }));
   const fermer = el('button', { type: 'button', class: 'btn-rond btn-fermer', 'aria-label': 'とじる', 'data-lire': 'とじる', html: ICONE_FERMER });

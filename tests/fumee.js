@@ -60,8 +60,24 @@ const controler = (page) => page.evaluate(() => {
           await page.locator('.onglet').nth(i).click();
           await page.waitForTimeout(150);
           await verifier(`onglet ${i}`);
+          if (i === 1) {
+            await page.locator('.chip', { hasText: 'くわしく' }).click();
+            await verifier('こんしゅう くわしく');
+            await page.locator('.bloc').first().click();
+            await page.waitForTimeout(200);
+            await verifier('こんしゅう lieu');
+            await page.keyboard.press('Escape');
+            await page.locator('.chip', { hasText: 'かんたん' }).click();
+          }
         }
         await page.locator('.onglet').first().click();
+        const ajout = page.locator('.pied-jour .btn', { hasText: 'いれる' });
+        if (await ajout.count()) {
+          await ajout.click();
+          await page.waitForTimeout(200);
+          await verifier('いれる');
+          await page.keyboard.press('Escape');
+        }
         const fait = page.locator('.maintenant .btn-fait');
         if (await fait.count()) {
           await fait.click();
