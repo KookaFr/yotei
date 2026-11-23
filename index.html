@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>よてい</title>
+  <meta name="description" content="きょうの よてい・いっしゅうかん・カレンダー・てじゅん・ふりかえり。Emploi du temps visuel en japonais, pour les jeunes avec un retard intellectuel.">
+  <meta name="theme-color" content="#f6f7f2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14181a" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="よてい">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icone.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icone-180.png">
+  <!-- La police est dans le dépôt (licence SIL OFL, polices/LICENCE-OFL.txt) : aucune connexion vers un tiers. -->
+  <link rel="preload" href="polices/BIZUDPGothic-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="polices/BIZUDPGothic-Bold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="yotei.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="haut">
+      <h1 class="haut-date" id="haut-date"></h1>
+      <button type="button" class="btn-rond btn-lire" id="btn-lire" aria-label="さわった ところを よむ" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12V5.5a1.5 1.5 0 0 1 3 0V11"/><path d="M12 10V8.5a1.5 1.5 0 0 1 3 0V12"/><path d="M15 11a1.5 1.5 0 0 1 3 0v4a6 6 0 0 1-6 6h-.6a6 6 0 0 1-4.7-2.3L4.6 16a1.6 1.6 0 0 1 2.5-2l1.9 2"/><path d="M17.5 2.5a5 5 0 0 1 2.5 4M16 4.6a2.6 2.6 0 0 1 1.3 2"/></svg>
+      </button>
+      <button type="button" class="btn btn-parents" id="btn-parents">おうちの人<span>ながおし</span></button>
+    </header>
+    <main class="vue" id="vue" tabindex="-1"></main>
+    <nav class="onglets" id="onglets" aria-label="メニュー"></nav>
+  </div>
+
+  <!-- Espace parents (appui long sur 「おうちの人」) -->
+  <section class="ecran-parents" id="ecran-parents" hidden lang="fr">
+    <header class="p-haut">
+      <h1 id="parents-titre">Espace parents</h1>
+      <div class="p-langue" id="parents-langue"></div>
+      <button type="button" class="btn btn-petit" id="btn-fermer-parents">Fermer</button>
+    </header>
+    <div class="p-corps" id="parents-corps"></div>
+  </section>
+
+  <div class="plein" id="plein" hidden></div>
+  <div class="feuille" id="feuille" hidden>
+    <div class="feuille-fond" id="feuille-fond"></div>
+    <div class="feuille-boite" id="feuille-boite" role="dialog" aria-modal="true"></div>
+  </div>
+  <div class="message" id="message" hidden role="status"></div>
+
+  <div class="maj" id="maj" hidden role="status">
+    <span>あたらしい よていに なったよ。</span>
+    <button type="button" class="btn btn-petit btn-principal" id="maj-oui">あたらしく する</button>
+    <button type="button" class="btn btn-petit" id="maj-non">あとで</button>
+  </div>
+
+  <input type="file" id="fichier-camera" class="cache-visuel" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
+  <input type="file" id="fichier-galerie" class="cache-visuel" accept="image/*" tabindex="-1" aria-hidden="true">
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>
