@@ -126,7 +126,7 @@ nav.recit = (d) => {
   }
   rendreTout();
 };
-nav.etapes = (id, fin) => lancerEtapes(id, fin);
+nav.etapes = (id, fin, d) => lancerEtapes(id, fin, d);
 definirRafraichir(() => nav.rafraichir());
 
 /* ----- Le temps qui passe : l'horloge avance, les annonces ----- */

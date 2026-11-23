@@ -73,6 +73,13 @@ function listeRetenir(d, dr) {
   if (!items.length) return null;
   const ul = el('ul', { class: 'a-retenir' });
   items.slice(0, MAX_RETENIR).forEach((x) => {
+    if (x.sorte === 'mochimono') {
+      ul.append(el('li', {
+        class: 'retenir retenir-mochimono', 'data-lire': `もちもの。 ${x.liste.map((a) => lu(a.texte)).join('、 ')}`,
+        html: `<i aria-hidden="true">🎒</i>${x.liste.map((a) => `<span class="mm-objet"><i aria-hidden="true">${a.emoji || ''}</i>${html(a.texte)}</span>`).join('')}`,
+      }));
+      return;
+    }
     ul.append(el('li', {
       class: `retenir retenir-${x.sorte}${x.it ? ` lieu-${x.it.carte.lieu}` : ''}`,
       'data-lire': `${lu(x.texte)}${x.debut !== undefined && x.debut !== null ? `。 ${heureLue(x.debut)}から` : ''}`,

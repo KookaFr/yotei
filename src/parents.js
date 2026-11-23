@@ -324,7 +324,10 @@ function editerRoutine(r) {
     nom.addEventListener('change', () => { r.nom = nom.value.trim() || 'てじゅん'; enregistrer(); });
     const emoji = el('input', { type: 'text', class: 'p-emoji', value: r.emoji || '', maxlength: '8' });
     emoji.addEventListener('change', () => { r.emoji = emoji.value.trim(); enregistrer(); });
-    contenu.append(champ(L('Nom', '名前'), nom), champ(L('Émoji', '絵文字'), emoji));
+    const avec = el('input', { type: 'checkbox', checked: r.avecMochimono ?? r.id === 'mochimono' });
+    avec.addEventListener('change', () => { r.avecMochimono = avec.checked; enregistrer(); });
+    contenu.append(champ(L('Nom', '名前'), nom), champ(L('Émoji', '絵文字'), emoji),
+      el('label', { class: 'p-case' }, avec, el('span', { text: L('Ajouter les もちもの du lendemain comme étapes', '明日の もちものを ステップに 入れる') })));
     r.etapes.forEach((e, i) => {
       const ligne = el('div', { class: 'ed-etape' });
       const em = el('input', { type: 'text', class: 'p-emoji', value: e.emoji || '', maxlength: '8', 'aria-label': L('Émoji', '絵文字') });
@@ -387,7 +390,7 @@ function blocCartes() {
 }
 
 function editerCarte(c0) {
-  const c = { ...c0 };
+  const c = { ...c0, mochimono: (c0.mochimono || []).map((a) => ({ ...a })) };
   const base = CARTES.find((x) => x.id === c.id);
   const contenu = el('div', { class: 'p-feuille' });
   const apercu = el('div', { class: 'p-apercu' });
@@ -411,13 +414,28 @@ function editerCarte(c0) {
   sansPhoto.addEventListener('change', () => { c.sansPhoto = sansPhoto.checked; });
   const important = el('input', { type: 'checkbox', checked: Boolean(c.important) });
   important.addEventListener('change', () => { c.important = important.checked; });
+  // もちもの : une ligne par affaire (émoji + nom).
+  const affaires = el('div', { class: 'p-mochimono' });
+  const dessinerAffaires = () => {
+    affaires.replaceChildren();
+    c.mochimono.forEach((a, i) => {
+      const em = el('input', { type: 'text', class: 'p-emoji', value: a.emoji || '', maxlength: '8', 'aria-label': L('Émoji', '絵文字') });
+      em.addEventListener('input', () => { a.emoji = em.value.trim(); });
+      const tx = el('input', { type: 'text', value: a.texte || '', placeholder: L('Ex. 体操服《たいそうふく》', '例：体操服《たいそうふく》') });
+      tx.addEventListener('input', () => { a.texte = tx.value.trim(); });
+      affaires.append(el('div', { class: 'p-ligne p-affaire' }, em, tx,
+        btnP('✕', () => { c.mochimono.splice(i, 1); dessinerAffaires(); }, 'btn btn-mini btn-danger')));
+    });
+    affaires.append(btnP(L('＋ Une affaire', '＋ もちものを たす'), () => { c.mochimono.push({ emoji: '🎒', texte: '' }); dessinerAffaires(); }));
+  };
+  dessinerAffaires();
   const photoBtns = el('div', { class: 'p-ligne' });
   const majPhotoBtns = () => {
-    photoBtns.replaceChildren(
+    photoBtns.replaceChildren(...[
       btnP(L('Prendre une photo', '写真を とる'), () => mettrePhoto('camera')),
       btnP(L('Choisir une photo', '写真を えらぶ'), () => mettrePhoto('galerie')),
       c.photo ? btnP(L('Enlever la photo', '写真を はずす'), () => { c.photo = ''; majApercu(); majPhotoBtns(); }, 'btn btn-petit btn-danger') : null,
-    );
+    ].filter(Boolean));
   };
   const mettrePhoto = async (source) => {
     const id = await nouvellePhoto(source, 'carte');
@@ -438,6 +456,9 @@ function editerCarte(c0) {
     champ(L('Phrase du soir (ふりかえり)', 'ふりかえりの 文'), recit, L('Au passé : ce que l\'enfant a fait.', '「〜しました」の 形で')),
     champ(L('Question de vérification (「おわった」)', 'たしかめる 質問（「おわった」の とき）'), verif,
       L('Posée avant de cocher. Vide : 「おわった？」.', 'チェックの 前に 聞きます。空なら「おわった？」。')),
+    el('div', { class: 'p-champ' }, el('span', { class: 'p-label', text: L('もちもの (affaires à emporter ce jour-là)', 'もちもの（その日に もっていく もの）') }), affaires,
+      el('small', { class: 'p-aide', text: L('Elles apparaissent dans la semaine, dans 「きょう」, et comme étapes dans 「あしたの じゅんび」 la veille.',
+        '「こんしゅう」「きょう」に 出て、前の日の「明日の 準備」の てじゅんにも 入ります。') })),
     champ(L('Étapes liées', 'つなぐ てじゅん'), routineSel),
     el('label', { class: 'p-case' }, sansPhoto, el('span', { text: L('Ne pas proposer de photo (toilettes, bain…)', '写真を すすめない（トイレ、おふろなど）') })),
     el('label', { class: 'p-case' }, important, el('span', { text: L('Important, à ne pas oublier : mis en avant dans 「こんしゅう」', 'わすれては いけない 予定：「こんしゅう」で 目立たせる') })),
@@ -445,11 +466,14 @@ function editerCarte(c0) {
   const actions = el('div', { class: 'p-ligne' });
   actions.append(btnP(L('Enregistrer', '保存'), () => {
     if (!c.nom.trim()) { nom.focus(); return; }
-    const garder = { ...c };
+    const garder = { ...c, mochimono: c.mochimono.filter((a) => a.texte) };
+    if (!garder.mochimono.length) delete garder.mochimono;
     delete garder.catalogue;
     delete garder.nouvelle;
     // Carte du catalogue : on ne garde que ce qui change.
-    if (base) Object.keys(garder).forEach((k) => { if (k !== 'id' && garder[k] === base[k]) delete garder[k]; });
+    if (base) Object.keys(garder).forEach((k) => { if (k !== 'id' && JSON.stringify(garder[k]) === JSON.stringify(base[k])) delete garder[k]; });
+    // Une carte du catalogue dont on a enlevé toutes les もちもの : on garde la liste vide.
+    if (base && base.mochimono && !garder.mochimono && !c.mochimono.some((a) => a.texte)) garder.mochimono = [];
     if (c0.photo && c0.photo !== c.photo) supprimerPhoto(c0.photo);
     enregistrerCarte(garder);
     fermerFeuille();

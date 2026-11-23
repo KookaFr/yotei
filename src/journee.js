@@ -12,6 +12,7 @@ import {
 import {
   carte, journalDu, modeleHabituel, programmeDu, sorteDuJour,
 } from './donnees.js';
+import { lu } from './texte.js';
 
 /* ----- Les moments de la journée : 4 parts égales de 4 heures (6 h, 10 h, 14 h, 18 h, 22 h) ----- */
 export const PERIODES = [
@@ -114,9 +115,21 @@ export function aRetenir(d, items) {
   const res = [];
   if (ferie) res.push({ emoji: '🎌', texte: ferie, sorte: 'ferie' });
   evenements.forEach((ev) => res.push({ emoji: ev.emoji || '⭐', texte: ev.nom, sorte: 'evenement' }));
+  const affaires = mochimonoDu(d, items);
+  if (affaires.length) res.push({ emoji: '🎒', texte: affaires.map((a) => a.texte).join('・'), sorte: 'mochimono', liste: affaires });
   items.filter((it) => it.carte.important || it.inhabituel || it.act.parEleve).forEach((it) => {
     if (res.some((x) => x.texte === it.carte.nom)) return;
     res.push({ emoji: it.carte.emoji || '⭐', texte: it.carte.nom, debut: it.debut, sorte: it.act.parEleve ? 'eleve' : 'activite', it });
   });
+  return res;
+}
+
+/* ----- Les affaires à emporter (もちもの) : celles des cartes de la journée, sans doublon ----- */
+export function mochimonoDu(d, items = deroulement(d).items) {
+  const res = [];
+  items.forEach((it) => (it.carte.mochimono || []).forEach((a) => {
+    if (!a || !a.texte || res.some((x) => lu(x.texte) === lu(a.texte))) return;
+    res.push({ ...a, carte: it.carte, debut: it.debut, fini: Boolean(it.passe || it.fait) });
+  }));
   return res;
 }

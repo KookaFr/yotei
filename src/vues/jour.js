@@ -10,11 +10,11 @@ import {
   routine, sorteDuJour,
 } from '../donnees.js';
 import {
-  aujourdhui, cle, deCle, ecartJours, JOURS_SEMAINE, texteDans, texteDuree, versTexte, yomiDans, yomiDate, yomiDuree, yomiHeure,
+  ajouterJours, aujourdhui, cle, deCle, ecartJours, JOURS_SEMAINE, texteDans, texteDuree, versTexte, yomiDans, yomiDate, yomiDuree, yomiHeure,
 } from '../heure.js';
 import { barre, repereGrandeAiguille, svgHorloge } from '../horloge.js';
 import {
-  deroulement, indexPeriode, PERIODES,
+  deroulement, indexPeriode, mochimonoDu, PERIODES,
 } from '../journee.js';
 import { nav } from '../nav.js';
 import { el } from '../outils.js';
@@ -131,6 +131,36 @@ function bandeauEvenements(d) {
   return b;
 }
 
+/* ----- Les affaires à emporter : 「きょうの もちもの」 (jusqu'à l'activité), 「あしたの もちもの」 (dès 15 h) ----- */
+
+function boiteMochimono(titre, liste) {
+  const lire = `${lu(titre)}。 ${liste.map((a) => lu(a.texte)).join('、 ')}。`;
+  const boite = el('section', { class: 'mochimono', 'data-lire': lire });
+  boite.append(el('h3', { html: `<i aria-hidden="true">🎒</i>${html(titre)}` }));
+  const ul = el('ul');
+  liste.forEach((a) => ul.append(el('li', {
+    html: `<i aria-hidden="true">${a.emoji || '•'}</i><span>${html(a.texte)}</span><small>${html(a.carte.nom)}</small>`,
+  })));
+  boite.append(ul);
+  return boite;
+}
+
+function encadresMochimono(d, dr) {
+  const res = [];
+  if (dr.aujourdhui) {
+    const auj = mochimonoDu(d, dr.items).filter((a) => !a.fini);
+    if (auj.length) res.push(boiteMochimono('今日《きょう》の もちもの', auj));
+    if (dr.maintenant >= 15 * 60) {
+      const demain = mochimonoDu(ajouterJours(d, 1));
+      if (demain.length) res.push(boiteMochimono('明日《あした》の もちもの', demain));
+    }
+  } else if (!dr.passe) {
+    const liste = mochimonoDu(d, dr.items);
+    if (liste.length) res.push(boiteMochimono('この 日《ひ》の もちもの', liste));
+  }
+  return res;
+}
+
 /* ----- La liste de la journée ----- */
 
 function ligneActivite(d, it) {
@@ -142,7 +172,8 @@ function ligneActivite(d, it) {
     'aria-label': `${it.debut !== null ? `${heureLue(it.debut)}、 ` : ''}${nomLu(c)}${etat ? `、 ${etat}` : ''}`,
     html: `<span class="act-heure">${it.debut !== null ? heureHtml(it.debut) : ''}</span>${visuel(c)}`
       + `<span class="act-nom">${nomHtml(c)}</span>`
-      + `<span class="act-etat" aria-hidden="true">${it.fait ? ICONE_COCHE : ''}${it.note && it.note.photo ? '<i class="act-photo">📷</i>' : ''}</span>`,
+      + `<span class="act-etat" aria-hidden="true">${it.fait ? ICONE_COCHE : ''}${it.note && it.note.photo ? '<i class="act-photo">📷</i>' : ''}`
+      + `${!it.fait && c.mochimono && c.mochimono.length ? '<i class="act-photo">🎒</i>' : ''}</span>`,
   });
   activable(b, () => ouvrirActivite(d, it));
   li.append(b);
@@ -195,6 +226,7 @@ export function rendreJour(conteneur, d = aujourdhui(), { retour = null } = {}) 
     const s = carteSuivante(dr);
     if (s) page.append(s);
   }
+  encadresMochimono(d, dr).forEach((b) => page.append(b));
 
   if (estAuj) {
     // Aujourd'hui : ce qui reste à faire d'abord ; ce qui est fini en dessous, replié.
@@ -332,7 +364,7 @@ async function prendrePhoto(d, it, source) {
 }
 
 function lancerEtapes(d, it) {
-  nav.etapes(it.carte.routine, () => marquerFait(d, it));
+  nav.etapes(it.carte.routine, () => marquerFait(d, it), d);
 }
 
 /* ----- Le détail d'une activité (toucher une ligne) ----- */
@@ -349,6 +381,7 @@ function ouvrirActivite(d, it) {
   if (courant.note && courant.note.photo) {
     contenu.append(el('div', { class: 'detail-photo avec-photo', html: `<img data-photo="${courant.note.photo}" alt="">` }));
   }
+  if (c.mochimono && c.mochimono.length) contenu.append(boiteMochimono('もちもの', c.mochimono.map((a) => ({ ...a, carte: c }))));
   const actions = el('div', { class: 'actions-feuille' });
   actions.append(bouton('きく', () => lireElement(tete), { classe: 'btn', icone: ICONE_HP, options: { garde: false } }));
   if (!dr.passe || courant.fait) {

@@ -6,7 +6,8 @@
    - sansPhoto : on ne propose pas de photo (toilettes, bain…) ;
    - routine : les étapes à suivre (てじゅん) ;
    - important : à ne pas oublier (mis en avant dans la semaine) ;
-   - verif : la question posée quand l'élève appuie sur 「おわった」 (sinon 「おわった？」).
+   - verif : la question posée quand l'élève appuie sur 「おわった」 (sinon 「おわった？」) ;
+   - mochimono : les affaires à emporter ce jour-là [{ emoji, texte }] (semaine, きょう, 明日の 準備).
    Les parents peuvent modifier une carte (photo, nom) ou en créer : donnees.js les garde à part.
    ====================================================================== */
 
@@ -17,6 +18,7 @@ export const LIEUX = {
 };
 
 const c = (id, lieu, emoji, nom, recit, options = {}) => ({ id, lieu, emoji, nom, recit, ...options });
+const m = (emoji, texte) => ({ emoji, texte });
 
 export const CARTES = [
   // --- École ---
@@ -27,7 +29,7 @@ export const CARTES = [
   c('sagyo', 'gakko', '🛠️', '作業《さぎょう》 学習《がくしゅう》', '作業《さぎょう》を しました。'),
   c('seikatsu', 'gakko', '🧺', '生活《せいかつ》 単元《たんげん》 学習《がくしゅう》', '生活《せいかつ》 単元《たんげん》 学習《がくしゅう》を しました。'),
   c('shokugyo', 'gakko', '💼', '職業《しょくぎょう》', '職業《しょくぎょう》の 勉強《べんきょう》を しました。'),
-  c('taiiku', 'gakko', '🏃', '体育《たいいく》', '体育《たいいく》で 体《からだ》を 動《うご》かしました。'),
+  c('taiiku', 'gakko', '🏃', '体育《たいいく》', '体育《たいいく》で 体《からだ》を 動《うご》かしました。', { mochimono: [m('👕', '体操服《たいそうふく》'), m('👟', '体育館《たいいくかん》シューズ')] }),
   c('ongaku', 'gakko', '🎵', '音楽《おんがく》', '音楽《おんがく》の 時間《じかん》が ありました。'),
   c('bijutsu', 'gakko', '🎨', '美術《びじゅつ》', '美術《びじゅつ》で 作品《さくひん》を 作《つく》りました。'),
   c('jiritsu', 'gakko', '🧩', '自立《じりつ》 活動《かつどう》', '自立《じりつ》 活動《かつどう》を しました。'),
@@ -38,9 +40,9 @@ export const CARTES = [
   c('kaerinokai', 'gakko', '👋', '帰《かえ》りの 会《かい》', '帰《かえ》りの 会《かい》に 出《で》ました。'),
   c('gekou', 'gakko', '🚌', '下校《げこう》', '家《いえ》に 帰《かえ》りました。'),
   c('bukatsu', 'gakko', '⚽', '部活動《ぶかつどう》', '部活動《ぶかつどう》を しました。'),
-  c('jisshu', 'gakko', '🏭', '実習《じっしゅう》', '実習《じっしゅう》に 行《い》きました。', { important: true }),
-  c('ensoku', 'gakko', '🚍', '遠足《えんそく》', '遠足《えんそく》に 行《い》きました。', { important: true }),
-  c('undokai', 'gakko', '🏅', '運動会《うんどうかい》', '運動会《うんどうかい》に 出《で》ました。', { important: true }),
+  c('jisshu', 'gakko', '🏭', '実習《じっしゅう》', '実習《じっしゅう》に 行《い》きました。', { important: true, mochimono: [m('🦺', '作業着《さぎょうぎ》'), m('🥤', '水筒《すいとう》')] }),
+  c('ensoku', 'gakko', '🚍', '遠足《えんそく》', '遠足《えんそく》に 行《い》きました。', { important: true, mochimono: [m('🍱', 'お弁当《べんとう》'), m('🥤', '水筒《すいとう》')] }),
+  c('undokai', 'gakko', '🏅', '運動会《うんどうかい》', '運動会《うんどうかい》に 出《で》ました。', { important: true, mochimono: [m('👕', '体操服《たいそうふく》'), m('🥤', '水筒《すいとう》')] }),
   c('bunkasai', 'gakko', '🎭', '文化祭《ぶんかさい》', '文化祭《ぶんかさい》に 出《で》ました。', { important: true }),
   c('shugaku', 'gakko', '🧳', '修学《しゅうがく》 旅行《りょこう》', '修学《しゅうがく》 旅行《りょこう》に 行《い》きました。', { important: true }),
   c('kenshin', 'gakko', '🩺', '健康《けんこう》 診断《しんだん》', '健康《けんこう》 診断《しんだん》を 受《う》けました。', { sansPhoto: true, important: true }),
@@ -82,10 +84,10 @@ export const CARTES = [
   c('kouen', 'soto', '🌳', '公園《こうえん》', '公園《こうえん》に 行《い》きました。'),
   c('densha', 'soto', '🚃', '電車《でんしゃ》', '電車《でんしゃ》に 乗《の》りました。'),
   c('basu', 'soto', '🚌', 'バス', 'バスに 乗《の》りました。'),
-  c('puru', 'soto', '🏊', 'プール', 'プールで 泳《およ》ぎました。'),
+  c('puru', 'soto', '🏊', 'プール', 'プールで 泳《およ》ぎました。', { mochimono: [m('🩱', '水着《みずぎ》'), m('🧢', '水泳《すいえい》ぼうし')] }),
   c('supotsu', 'soto', '⚽', 'スポーツ', 'スポーツを しました。'),
   c('naraigoto', 'soto', '🎹', '習《なら》い事《ごと》', '習《なら》い事《ごと》に 行《い》きました。'),
-  c('byoin', 'soto', '🏥', '病院《びょういん》', '病院《びょういん》に 行《い》きました。', { sansPhoto: true, important: true }),
+  c('byoin', 'soto', '🏥', '病院《びょういん》', '病院《びょういん》に 行《い》きました。', { sansPhoto: true, important: true, mochimono: [m('💳', '保険証《ほけんしょう》'), m('📕', 'お薬《くすり》手帳《てちょう》')] }),
   c('gaishoku', 'soto', '🍽️', '外食《がいしょく》', 'お店《みせ》で 食《た》べました。'),
   c('tomodachi', 'soto', '🤝', '友《とも》だちと 遊《あそ》ぶ', '友《とも》だちと 遊《あそ》びました。'),
 ];

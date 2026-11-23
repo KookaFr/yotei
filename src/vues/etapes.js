@@ -4,6 +4,8 @@
    ====================================================================== */
 
 import { etat } from '../donnees.js';
+import { ajouterJours, aujourdhui } from '../heure.js';
+import { mochimonoDu } from '../journee.js';
 import { el } from '../outils.js';
 import { chargerPhotos } from '../photos.js';
 import { activable } from '../tactile.js';
@@ -31,10 +33,22 @@ export function rendreEtapes(conteneur, lancer) {
   chargerPhotos(page);
 }
 
+// 「明日の 準備」 (et les étapes où les parents l'ont coché) : les もちもの du lendemain deviennent des étapes.
+export const avecMochimono = (r) => (r.avecMochimono ?? r.id === 'mochimono');
+
 // Le lecteur : une étape à la fois. fin() est appelé quand tout est fait.
-export function lancerEtapes(idRoutine, fin = null) {
-  const r = etat.routines.find((x) => x.id === idRoutine);
-  if (!r || !r.etapes.length) return;
+export function lancerEtapes(idRoutine, fin = null, date = null) {
+  const base = etat.routines.find((x) => x.id === idRoutine);
+  if (!base || !base.etapes.length) return;
+  let r = base;
+  if (avecMochimono(base)) {
+    const ajout = mochimonoDu(ajouterJours(date || aujourdhui(), 1)).map((a) => ({ emoji: a.emoji || '🎒', texte: `${a.texte}を かばんに 入《い》れる` }));
+    if (ajout.length) {
+      const etapes = [...base.etapes];
+      etapes.splice(Math.max(0, etapes.length - 1), 0, ...ajout);
+      r = { ...base, etapes };
+    }
+  }
   let i = 0;
   const ecran = el('section', { class: 'lecteur', 'aria-label': lu(r.nom) });
   const tete = el('header', { class: 'lecteur-tete' });

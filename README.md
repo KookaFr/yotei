@@ -33,6 +33,7 @@ Elle fait suite à くらべよう (https://kookafr.github.io/kurabe/) et repren
 - **Étapes** : créer et modifier les てじゅん, avec émoji ou photo pour chaque étape.
 - **Cartes et photos** : créer des cartes avec une vraie photo (le bus de l'école, la デイサービス…), ou mettre une photo sur une carte existante ; choisir le lieu, la phrase du soir, les étapes liées, et ne pas proposer de photo (toilettes, bain…).
 - **Ce que l'enfant peut changer** : rien, ajouter des activités, ou ajouter et déplacer les activités sans heure. Pour ajouter, il choisit le jour (きょう, あした, …), le moment (つぎ, 朝, 昼, 午後, 夜) et la carte ; le bouton dit ce qui va se passer (「あしたの ごごに いれる」).
+- **もちもの** : sur chaque carte, les affaires à emporter (体育 → 体操服, 体育館シューズ ; プール → 水着 ; 病院 → 保険証, お薬手帳…). Elles apparaissent dans la semaine (🎒), dans 「きょう」 (「きょうの もちもの」 le matin, 「あしたの もちもの」 dès 15 h), dans le détail de l'activité, et deviennent des étapes de 「明日の 準備」 la veille (「体操服を かばんに 入れる」).
 - **Activités importantes** : une case sur chaque carte (遠足, 実習, 病院… le sont déjà) ; elles ressortent dans la semaine, comme les activités ajoutées pour une seule date.
 - **Sauvegarde** : un fichier `.json` pour passer le même emploi du temps du téléphone à l'iPad (photos des cartes et des étapes comprises).
 

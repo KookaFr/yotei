@@ -890,3 +890,28 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .verif-question { font-size: 1.6em; font-weight: 700; text-align: center; line-height: 1.3; }
 .verif-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .verif-etapes { width: 100%; }
+
+/* もちもの : les affaires à emporter */
+.mochimono { padding: 10px 14px; border: 3px solid #d99a00; border-radius: 18px; background: #fff7dc; color: #2d2410; }
+.mochimono h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 1.1em; }
+.mochimono i, .mm-objet i { font-style: normal; font-family: var(--emoji); }
+.mochimono h3 i { font-size: 1.4em; }
+.mochimono ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.mochimono li { display: grid; grid-template-columns: auto auto; grid-template-areas: "e t" "e s"; align-items: center; gap: 0 8px; padding: 6px 12px; border-radius: 14px; background: #ffffff; font-weight: 700; font-size: 1.05em; }
+.mochimono li i { grid-area: e; font-size: 1.6em; }
+.mochimono li span { grid-area: t; }
+.mochimono li small { grid-area: s; font-size: .72em; color: #6b5a2c; font-weight: 700; }
+:root[data-theme="dark"] .mochimono { background: #3a2f10; color: #fff3cf; border-color: #f0c04a; }
+:root[data-theme="dark"] .mochimono li { background: #2a2310; }
+:root[data-theme="dark"] .mochimono li small { color: #e8d49a; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .mochimono { background: #3a2f10; color: #fff3cf; border-color: #f0c04a; }
+  :root:not([data-theme="light"]) .mochimono li { background: #2a2310; }
+  :root:not([data-theme="light"]) .mochimono li small { color: #e8d49a; }
+}
+.retenir-mochimono { --lieu: #d99a00; --lieu-fond: #fff4cf; color: #3d2c00; flex-wrap: wrap; }
+.mm-objet { display: inline-flex; align-items: center; gap: 2px; }
+.mm-objet + .mm-objet::before { content: "・"; }
+.p-affaire input[type="text"]:not(.p-emoji) { flex: 1; min-width: 8em; min-height: 44px; padding: 4px 8px; border: 2px solid var(--bord); border-radius: 10px; background: var(--papier); }
+.p-mochimono { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.p-mochimono .p-affaire { width: 100%; }
