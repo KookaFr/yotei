@@ -5,7 +5,8 @@
    - recit : la phrase du soir (ふりかえり), au passé ;
    - sansPhoto : on ne propose pas de photo (toilettes, bain…) ;
    - routine : les étapes à suivre (てじゅん) ;
-   - important : à ne pas oublier (mis en avant dans la semaine).
+   - important : à ne pas oublier (mis en avant dans la semaine) ;
+   - verif : la question posée quand l'élève appuie sur 「おわった」 (sinon 「おわった？」).
    Les parents peuvent modifier une carte (photo, nom) ou en créer : donnees.js les garde à part.
    ====================================================================== */
 
@@ -51,24 +52,24 @@ export const CARTES = [
   c('asashitaku', 'ie', '🎒', '朝《あさ》の したく', '朝《あさ》の したくを しました。', { routine: 'asa' }),
   c('toire', 'ie', '🚽', 'トイレ', 'トイレに 行《い》きました。', { sansPhoto: true }),
   c('kao', 'ie', '💧', '顔《かお》を 洗《あら》う', '顔《かお》を 洗《あら》いました。', { sansPhoto: true }),
-  c('kigae', 'ie', '👕', '着替《きが》える', '着替《きが》えました。', { sansPhoto: true }),
-  c('asagohan', 'ie', '🍚', '朝《あさ》ご飯《はん》', '朝《あさ》ご飯《はん》を 食《た》べました。'),
-  c('hirugohan', 'ie', '🍙', '昼《ひる》ご飯《はん》', '昼《ひる》ご飯《はん》を 食《た》べました。'),
-  c('bangohan', 'ie', '🍛', '晩《ばん》ご飯《はん》', '晩《ばん》ご飯《はん》を 食《た》べました。'),
-  c('hamigaki', 'ie', '🪥', '歯《は》みがき', '歯《は》を みがきました。', { sansPhoto: true }),
+  c('kigae', 'ie', '👕', '着替《きが》える', '着替《きが》えました。', { sansPhoto: true, verif: 'ぬいだ 服《ふく》を かたづけた？' }),
+  c('asagohan', 'ie', '🍚', '朝《あさ》ご飯《はん》', '朝《あさ》ご飯《はん》を 食《た》べました。', { verif: 'お皿《さら》を かたづけた？' }),
+  c('hirugohan', 'ie', '🍙', '昼《ひる》ご飯《はん》', '昼《ひる》ご飯《はん》を 食《た》べました。', { verif: 'お皿《さら》を かたづけた？' }),
+  c('bangohan', 'ie', '🍛', '晩《ばん》ご飯《はん》', '晩《ばん》ご飯《はん》を 食《た》べました。', { verif: 'お皿《さら》を かたづけた？' }),
+  c('hamigaki', 'ie', '🪥', '歯《は》みがき', '歯《は》を みがきました。', { sansPhoto: true, verif: '歯《は》を ぜんぶ みがいた？' }),
   c('ittekimasu', 'ie', '🚪', 'いってきます', '家《いえ》を 出《で》ました。', { sansPhoto: true }),
   c('tadaima', 'ie', '🏠', 'ただいま', '家《いえ》に 帰《かえ》りました。', { sansPhoto: true, routine: 'kaeri' }),
   c('tearai', 'ie', '🧼', '手《て》を 洗《あら》う', '手《て》を 洗《あら》いました。', { sansPhoto: true, routine: 'te' }),
-  c('renrakucho', 'ie', '📒', '連絡帳《れんらくちょう》', '連絡帳《れんらくちょう》を 出《だ》しました。'),
-  c('oyatsu', 'ie', '🍪', 'おやつ', 'おやつを 食《た》べました。'),
-  c('shukudai', 'ie', '✏️', '宿題《しゅくだい》', '宿題《しゅくだい》を しました。'),
+  c('renrakucho', 'ie', '📒', '連絡帳《れんらくちょう》', '連絡帳《れんらくちょう》を 出《だ》しました。', { verif: '連絡帳《れんらくちょう》を お家《うち》の 人《ひと》に わたした？' }),
+  c('oyatsu', 'ie', '🍪', 'おやつ', 'おやつを 食《た》べました。', { verif: 'ごみを すてた？' }),
+  c('shukudai', 'ie', '✏️', '宿題《しゅくだい》', '宿題《しゅくだい》を しました。', { verif: '宿題《しゅくだい》を お家《うち》の 人《ひと》に 見《み》せた？' }),
   c('otetsudai', 'ie', '🍽️', 'お手伝《てつだ》い', 'お手伝《てつだ》いを しました。'),
   c('jiyu', 'ie', '😊', '自由《じゆう》 時間《じかん》', '好《す》きな ことを しました。'),
-  c('game', 'ie', '🎮', 'ゲーム', 'ゲームを しました。'),
-  c('terebi', 'ie', '📺', 'テレビ', 'テレビを 見《み》ました。'),
-  c('douga', 'ie', '📱', '動画《どうが》', '動画《どうが》を 見《み》ました。'),
+  c('game', 'ie', '🎮', 'ゲーム', 'ゲームを しました。', { verif: 'ゲームを かたづけた？' }),
+  c('terebi', 'ie', '📺', 'テレビ', 'テレビを 見《み》ました。', { verif: 'テレビを 消《け》した？' }),
+  c('douga', 'ie', '📱', '動画《どうが》', '動画《どうが》を 見《み》ました。', { verif: '動画《どうが》を とめた？' }),
   c('kiku', 'ie', '🎧', '音楽《おんがく》を 聞《き》く', '音楽《おんがく》を 聞《き》きました。'),
-  c('ofuro', 'ie', '🛁', 'お風呂《ふろ》', 'お風呂《ふろ》に 入《はい》りました。', { sansPhoto: true }),
+  c('ofuro', 'ie', '🛁', 'お風呂《ふろ》', 'お風呂《ふろ》に 入《はい》りました。', { sansPhoto: true, verif: '体《からだ》を ふいた？' }),
   c('kusuri', 'ie', '💊', '薬《くすり》', '薬《くすり》を 飲《の》みました。', { sansPhoto: true }),
   c('ashita', 'ie', '📋', '明日《あした》の 準備《じゅんび》', '明日《あした》の 準備《じゅんび》を しました。', { routine: 'mochimono' }),
   c('yorushitaku', 'ie', '🌙', '夜《よる》の したく', '夜《よる》の したくを しました。', { routine: 'yoru' }),

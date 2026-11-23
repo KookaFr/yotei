@@ -81,6 +81,9 @@ const controler = (page) => page.evaluate(() => {
         const fait = page.locator('.maintenant .btn-fait');
         if (await fait.count()) {
           await fait.click();
+          await page.waitForTimeout(200);
+          await verifier('おわった？');
+          await page.locator('.verif-actions .btn-fait').click();
           await page.waitForTimeout(900);
           await verifier('photo ?');
           await page.keyboard.press('Escape');

@@ -95,7 +95,7 @@ function carteMaintenant(d, dr) {
   const actions = el('div', { class: 'm-actions' });
   const r = c.routine && routine(c.routine);
   if (r) actions.append(bouton('てじゅん', () => lancerEtapes(d, actuel), { classe: 'btn btn-large', icone: ICONE_ETAPES }));
-  actions.append(bouton('おわった', () => marquerFait(d, actuel), { classe: 'btn btn-principal btn-large btn-fait', icone: ICONE_COCHE }));
+  actions.append(bouton('おわった', () => demanderFin(d, actuel), { classe: 'btn btn-principal btn-large btn-fait', icone: ICONE_COCHE }));
   art.append(actions);
   return art;
 }
@@ -237,6 +237,62 @@ export function rendreJour(conteneur, d = aujourdhui(), { retour = null } = {}) 
   return page;
 }
 
+/* ----- 「おわった」 : d'abord regarder l'heure, puis une question de vérification -----
+   - pas encore commencée : 「まだ はじまって いないよ。 4:40から。」 ;
+   - encore 10 minutes ou plus : 「5:00まで だよ。 あと 25ふん あるよ。」, avec l'horloge ;
+   puis la question de la carte (「お皿を かたづけた？」) ou 「ほんとうに おわった？」 / 「おわった？」.
+   「うん」 coche ; 「まだ」 ferme avec un encouragement. */
+
+export function demanderFin(d, it) {
+  if (!reglages.verifier) { marquerFait(d, it); return; }
+  const dr = deroulement(d);
+  const courant = dr.items.find((x) => x.act.id === it.act.id) || it;
+  const c = courant.carte;
+  const m = dr.maintenant;
+  let contexte = null;
+  if (dr.aujourdhui && courant.debut !== null && courant.debut - m >= 1) {
+    const dans = Math.ceil(courant.debut - m);
+    contexte = {
+      sorte: 'avant', fin: courant.debut,
+      html: `${html('まだ はじまって いないよ。')} ${heureHtml(courant.debut)}${html('から。')} ${html(`（あと ${texteDuree(dans)}）`)}`,
+      lire: `まだ はじまって いないよ。 ${heureLue(courant.debut)}から。 あと ${yomiDuree(dans)}。`,
+      encore: 'わかった。 じかんに なったら はじめようね。',
+    };
+  } else if (dr.aujourdhui && !courant.passe && courant.finEff !== null && courant.finEff - m >= 10) {
+    const reste = Math.ceil(courant.finEff - m);
+    contexte = {
+      sorte: 'tot', fin: courant.finEff,
+      html: `${heureHtml(courant.finEff)}${html('まで だよ。')} ${html(`あと ${texteDuree(reste)} あるよ。`)}`,
+      lire: `${heureLue(courant.finEff)}まで だよ。 あと ${yomiDuree(reste)} あるよ。`,
+      encore: 'わかった。 さいごまで がんばろう！',
+    };
+  }
+  const question = c.verif || (contexte ? 'ほんとうに おわった？' : `${c.nom}、 おわった？`);
+  const contenu = el('div', { class: 'verif' });
+  contenu.append(el('div', { class: `verif-tete lieu-${c.lieu}`, html: `${visuel(c, 'grand')}<span class="verif-nom">${nomHtml(c)}</span>` }));
+  if (contexte) {
+    const bloc = el('div', { class: `verif-contexte verif-${contexte.sorte}`, 'data-lire': contexte.lire });
+    if (reglages.horloge) bloc.insertAdjacentHTML('beforeend', svgHorloge(m, contexte.fin, { titre: contexte.lire }));
+    bloc.append(el('p', { html: contexte.html }));
+    contenu.append(bloc);
+  }
+  contenu.append(el('p', { class: 'verif-question', 'data-lire': lu(question), html: html(question) }));
+  const actions = el('div', { class: 'verif-actions' });
+  actions.append(
+    bouton('まだ', () => {
+      fermerFeuille();
+      parler(contexte ? contexte.encore : 'わかった。 おわったら また おしてね。');
+    }, { classe: 'btn btn-large', icone: ICONE_RETOUR }),
+    bouton('うん', () => { fermerFeuille(); marquerFait(d, courant); }, { classe: 'btn btn-large btn-fait', icone: ICONE_COCHE }),
+  );
+  contenu.append(actions);
+  if (c.routine && routine(c.routine)) {
+    contenu.append(bouton('てじゅんを 見《み》る', () => { fermerFeuille(); lancerEtapes(d, courant); }, { classe: 'btn verif-etapes', icone: ICONE_ETAPES }));
+  }
+  ouvrirFeuille({ titre: '', contenu, classe: 'feuille-verif' });
+  parler(`${contexte ? `${contexte.lire} ` : ''}${lu(question)}`);
+}
+
 /* ----- Cocher, photographier ----- */
 
 export function marquerFait(d, it, { proposer = true } = {}) {
@@ -299,7 +355,7 @@ function ouvrirActivite(d, it) {
     if (courant.fait) {
       actions.append(bouton('まだ', () => { oublierFait(d, courant); fermerFeuille(); }, { classe: 'btn', icone: ICONE_RETOUR }));
     } else if (dr.aujourdhui || dr.passe) {
-      actions.append(bouton('おわった', () => { fermerFeuille(); marquerFait(d, courant); }, { classe: 'btn btn-principal', icone: ICONE_COCHE }));
+      actions.append(bouton('おわった', () => { fermerFeuille(); demanderFin(d, courant); }, { classe: 'btn btn-principal', icone: ICONE_COCHE }));
     }
   }
   if (c.routine && routine(c.routine)) {

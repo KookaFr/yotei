@@ -401,6 +401,8 @@ function editerCarte(c0) {
   lieu.addEventListener('change', () => { c.lieu = lieu.value; });
   const recit = el('input', { type: 'text', value: c.recit || '', placeholder: L('Ex. バスに 乗《の》りました。', '例：バスに 乗《の》りました。') });
   recit.addEventListener('input', () => { c.recit = recit.value; });
+  const verif = el('input', { type: 'text', value: c.verif || '', placeholder: L('Ex. お皿《さら》を かたづけた？', '例：お皿《さら》を かたづけた？') });
+  verif.addEventListener('input', () => { c.verif = verif.value.trim(); });
   const routineSel = el('select', {});
   routineSel.append(el('option', { value: '', text: L('— aucune —', '— なし —') }));
   etat.routines.forEach((r) => routineSel.append(el('option', { value: r.id, text: lu(r.nom), selected: c.routine === r.id })));
@@ -434,6 +436,8 @@ function editerCarte(c0) {
     el('div', { class: 'p-champ' }, el('span', { class: 'p-label', text: L('Photo', '写真') }), photoBtns),
     champ(L('Lieu (couleur)', '場所（色）'), lieu),
     champ(L('Phrase du soir (ふりかえり)', 'ふりかえりの 文'), recit, L('Au passé : ce que l\'enfant a fait.', '「〜しました」の 形で')),
+    champ(L('Question de vérification (「おわった」)', 'たしかめる 質問（「おわった」の とき）'), verif,
+      L('Posée avant de cocher. Vide : 「おわった？」.', 'チェックの 前に 聞きます。空なら「おわった？」。')),
     champ(L('Étapes liées', 'つなぐ てじゅん'), routineSel),
     el('label', { class: 'p-case' }, sansPhoto, el('span', { text: L('Ne pas proposer de photo (toilettes, bain…)', '写真を すすめない（トイレ、おふろなど）') })),
     el('label', { class: 'p-case' }, important, el('span', { text: L('Important, à ne pas oublier : mis en avant dans 「こんしゅう」', 'わすれては いけない 予定：「こんしゅう」で 目立たせる') })),
@@ -509,6 +513,8 @@ function blocReglages() {
     choixRadio('eleve', [['rien', L('Rien : il suit et coche', '何も 変えない（見て、チェックする だけ）')],
       ['ajouter', L('Ajouter des activités à sa journée', '予定を 入れられる')],
       ['deplacer', L('Ajouter et déplacer les activités sans heure', '入れる ＋ 時間の ない 予定を 動かせる')]], reglages.eleve, (v) => ecrireReglages({ eleve: v })),
+    caseR('verifier', L("「おわった」 : regarder l'heure et poser une question avant de cocher (« あと 25ふん あるよ。 ほんとうに おわった？ »)",
+      '「おわった」の とき、時間を 見て、たしかめる 質問を する')),
     el('p', { class: 'p-sous-titre', text: L('Photos de la journée (ふりかえり)', 'ふりかえりの 写真') }),
     caseR('photos', L('Proposer une photo quand une activité est finie', 'おわった ときに 写真を すすめる')),
     champ(L('Garder les photos de la journée', '写真を のこす 期間'), selectR('garderPhotos', [[30, L('30 jours', '30日')], [60, L('60 jours', '60日')], [180, L('6 mois', '6か月')], [0, L('Toujours', 'ずっと')]])),

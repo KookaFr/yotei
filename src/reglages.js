@@ -18,6 +18,7 @@ const DEFAUT = {
   voixGenre: 'femme',
   voixNom: '',
   eleve: 'deplacer',      // ce que l'élève peut changer : 'rien' | 'ajouter' | 'deplacer'
+  verifier: true,         // 「おわった」 : regarder l'heure et poser une question avant de cocher
   photos: true,           // proposer une photo quand une activité est finie
   garderPhotos: 60,       // jours (0 : toujours)
   onglets: [...ONGLETS],
