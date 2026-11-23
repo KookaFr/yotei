@@ -21,7 +21,7 @@ Elle fait suite à くらべよう (https://kookafr.github.io/kurabe/) et repren
 
 **Couleurs par lieu** : école en bleu, maison en orange, dehors en vert, partout (liste, semaine, image partagée).
 
-**「おわった」 vérifie avant de cocher** : si l'activité n'a pas commencé, ou s'il reste 10 minutes ou plus, l'appli le montre (horloge et 「10:40まで だよ。 あと 25ふん あるよ。」) et demande 「ほんとうに おわった？」 ; sinon elle pose la question de la carte (「お皿を かたづけた？」, 「歯を ぜんぶ みがいた？」…) ou 「おわった？」. 「うん」 coche, 「まだ」 ferme avec un encouragement. Les parents peuvent écrire la question de chaque carte, ou désactiver la vérification.
+**「おわった」 vérifie avant de cocher** : une activité qui commence dans plus de 15 minutes ne peut pas être cochée (pas de bouton ; la nuit, 「いまは よる。 ゆっくり やすもう。」). Si elle commence dans moins de 15 minutes, ou s'il reste 10 minutes ou plus, l'appli le montre (horloge et 「10:40まで だよ。 あと 25ふん あるよ。」) et demande 「ほんとうに おわった？」 ; sinon elle pose la question de la carte (「お皿を かたづけた？」, 「歯を ぜんぶ みがいた？」…) ou 「おわった？」. 「うん」 coche, 「まだ」 ferme avec un encouragement. Les parents peuvent écrire la question de chaque carte, ou désactiver la vérification.
 
 **Annonces** (appli ouverte) : un carillon et 「〜の じかんだよ」 au début d'une activité, 「あと 5ふんで おわりだよ」 avant la fin.
 

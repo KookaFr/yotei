@@ -15,7 +15,7 @@ const FORMATS = {
   galaxy: { width: 320, height: 658 },
   paysage: { width: 780, height: 360 },
 };
-const MOMENTS = ['2026-11-25T10:25:00+09:00', '2026-11-25T16:35:00+09:00', '2026-11-23T23:10:00+09:00'];
+const MOMENTS = ['2026-11-25T10:25:00+09:00', '2026-11-25T16:35:00+09:00', '2026-11-23T23:10:00+09:00', '2026-11-24T00:30:00+09:00'];
 
 function serveur() {
   const racine = path.join(__dirname, '..');

@@ -29,6 +29,12 @@ import {
 } from '../ui.js';
 import { lireElement, parler, sons } from '../voix.js';
 
+// On ne peut pas cocher une activité qui commence dans plus de 15 minutes (la nuit, 「おきる」 à 6:30…).
+const AVANCE_MAX = 15;
+const tropTot = (dr, it) => (dr.aujourdhui && it.debut !== null && it.debut - dr.maintenant > AVANCE_MAX
+  ? Math.ceil(it.debut - dr.maintenant) : 0);
+const estNuit = (m) => m >= 21 * 60 || m < 5 * 60;
+
 const peutAjouter = () => reglages.eleve === 'ajouter' || reglages.eleve === 'deplacer';
 const peutDeplacer = () => reglages.eleve === 'deplacer';
 
@@ -92,6 +98,14 @@ function carteMaintenant(d, dr) {
   art.append(temps);
   art.dataset.lire = parole;
 
+  if (tropTot(dr, actuel)) {
+    // Pas encore l'heure : rien à cocher. La nuit, on le dit.
+    const nuit = estNuit(maintenant);
+    const texte = nuit ? '今《いま》は 夜《よる》。 ゆっくり 休《やす》もう。' : 'まだ はじまって いないよ。';
+    art.append(el('p', { class: `m-attente${nuit ? ' m-nuit' : ''}`, 'data-lire': lu(texte), html: `<i aria-hidden="true">${nuit ? '🌙' : '⏳'}</i><span>${html(texte)}</span>` }));
+    art.dataset.lire = `${parole} ${lu(texte)}`;
+    return art;
+  }
   const actions = el('div', { class: 'm-actions' });
   const r = c.routine && routine(c.routine);
   if (r) actions.append(bouton('てじゅん', () => lancerEtapes(d, actuel), { classe: 'btn btn-large', icone: ICONE_ETAPES }));
@@ -276,11 +290,13 @@ export function rendreJour(conteneur, d = aujourdhui(), { retour = null } = {}) 
    「うん」 coche ; 「まだ」 ferme avec un encouragement. */
 
 export function demanderFin(d, it) {
-  if (!reglages.verifier) { marquerFait(d, it); return; }
   const dr = deroulement(d);
   const courant = dr.items.find((x) => x.act.id === it.act.id) || it;
   const c = courant.carte;
   const m = dr.maintenant;
+  const attente = tropTot(dr, courant);
+  if (attente) { refuserFin(courant, attente, m); return; }
+  if (!reglages.verifier) { marquerFait(d, it); return; }
   let contexte = null;
   if (dr.aujourdhui && courant.debut !== null && courant.debut - m >= 1) {
     const dans = Math.ceil(courant.debut - m);
@@ -323,6 +339,25 @@ export function demanderFin(d, it) {
   }
   ouvrirFeuille({ titre: '', contenu, classe: 'feuille-verif' });
   parler(`${contexte ? `${contexte.lire} ` : ''}${lu(question)}`);
+}
+
+// Trop tôt : on explique, et on ne coche pas (un seul bouton 「わかった」).
+function refuserFin(it, attente, m) {
+  const c = it.carte;
+  const nuit = estNuit(m);
+  const lire = `${nomLu(c)}は まだ だよ。 ${heureLue(it.debut)}から。 あと ${yomiDuree(attente)}。${nuit ? ' いまは よる。 ゆっくり やすもう。' : ''}`;
+  const contenu = el('div', { class: 'verif' });
+  contenu.append(el('div', { class: `verif-tete lieu-${c.lieu}`, html: `${visuel(c, 'grand')}<span class="verif-nom">${nomHtml(c)}</span>` }));
+  const bloc = el('div', { class: 'verif-contexte verif-avant', 'data-lire': lire });
+  if (reglages.horloge) bloc.insertAdjacentHTML('beforeend', svgHorloge(m, attente <= 60 ? it.debut : null, { titre: lire }));
+  bloc.append(el('p', {
+    html: `${html('まだ だよ。')} ${heureHtml(it.debut)}${html('から。')} ${html(`（あと ${texteDuree(attente)}）`)}`,
+  }));
+  contenu.append(bloc);
+  if (nuit) contenu.append(el('p', { class: 'verif-question', html: `<i class="verif-lune" aria-hidden="true">🌙</i> ${html('今《いま》は 夜《よる》。 ゆっくり 休《やす》もう。')}` }));
+  contenu.append(bouton('わかった', fermerFeuille, { classe: 'btn btn-principal btn-large verif-ok' }));
+  ouvrirFeuille({ titre: '', contenu, classe: 'feuille-verif' });
+  parler(lire);
 }
 
 /* ----- Cocher, photographier ----- */
@@ -387,7 +422,7 @@ function ouvrirActivite(d, it) {
   if (!dr.passe || courant.fait) {
     if (courant.fait) {
       actions.append(bouton('まだ', () => { oublierFait(d, courant); fermerFeuille(); }, { classe: 'btn', icone: ICONE_RETOUR }));
-    } else if (dr.aujourdhui || dr.passe) {
+    } else if (dr.passe || (dr.aujourdhui && !tropTot(dr, courant))) {
       actions.append(bouton('おわった', () => { fermerFeuille(); demanderFin(d, courant); }, { classe: 'btn btn-principal', icone: ICONE_COCHE }));
     }
   }

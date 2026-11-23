@@ -50,7 +50,7 @@ export const CARTES = [
   c('shigyoshiki', 'gakko', '🌸', '始業式《しぎょうしき》', '始業式《しぎょうしき》に 出《で》ました。', { important: true }),
   c('shugyoshiki', 'gakko', '🎌', '終業式《しゅうぎょうしき》', '終業式《しゅうぎょうしき》に 出《で》ました。', { important: true }),
   // --- Maison ---
-  c('okiru', 'ie', '⏰', '起《お》きる', '起《お》きました。', { sansPhoto: true }),
+  c('okiru', 'ie', '⏰', '起《お》きる', '起《お》きました。', { sansPhoto: true, verif: 'ふとんから 出《で》た？' }),
   c('asashitaku', 'ie', '🎒', '朝《あさ》の したく', '朝《あさ》の したくを しました。', { routine: 'asa' }),
   c('toire', 'ie', '🚽', 'トイレ', 'トイレに 行《い》きました。', { sansPhoto: true }),
   c('kao', 'ie', '💧', '顔《かお》を 洗《あら》う', '顔《かお》を 洗《あら》いました。', { sansPhoto: true }),
@@ -75,7 +75,7 @@ export const CARTES = [
   c('kusuri', 'ie', '💊', '薬《くすり》', '薬《くすり》を 飲《の》みました。', { sansPhoto: true }),
   c('ashita', 'ie', '📋', '明日《あした》の 準備《じゅんび》', '明日《あした》の 準備《じゅんび》を しました。', { routine: 'mochimono' }),
   c('yorushitaku', 'ie', '🌙', '夜《よる》の したく', '夜《よる》の したくを しました。', { routine: 'yoru' }),
-  c('neru', 'ie', '🛏️', '寝《ね》る', '', { sansPhoto: true }),
+  c('neru', 'ie', '🛏️', '寝《ね》る', '', { sansPhoto: true, verif: 'ふとんに 入《はい》った？' }),
   // --- Dehors ---
   c('dei', 'soto', '🏡', '放課後《ほうかご》 デイ', '放課後《ほうかご》 デイに 行《い》きました。'),
   c('sanpo', 'soto', '🚶', '散歩《さんぽ》', '散歩《さんぽ》を しました。'),

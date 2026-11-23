@@ -915,3 +915,9 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .p-affaire input[type="text"]:not(.p-emoji) { flex: 1; min-width: 8em; min-height: 44px; padding: 4px 8px; border: 2px solid var(--bord); border-radius: 10px; background: var(--papier); }
 .p-mochimono { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 .p-mochimono .p-affaire { width: 100%; }
+
+/* Pas encore l'heure : pas de bouton 「おわった」 */
+.m-attente { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 16px; background: var(--surface); border: 2px dashed var(--bord); font-size: 1.15em; font-weight: 700; }
+.m-attente i, .verif-lune { font-style: normal; font-family: var(--emoji); font-size: 1.5em; }
+.m-nuit { background: #1f2747; color: #eef2ff; border-color: #5a6aa8; }
+.verif-ok { width: 100%; }
