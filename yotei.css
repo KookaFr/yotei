@@ -1040,3 +1040,4 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 }
 @media (prefers-reduced-motion: reduce) { .vient-de-bouger .act-btn { animation: none; outline: 4px solid var(--action); } }
 [data-motion="reduce"] .vient-de-bouger .act-btn { animation: none; outline: 4px solid var(--action); }
+.detail-environ { margin-right: .35em; font-size: .8em; color: var(--encre-douce); }

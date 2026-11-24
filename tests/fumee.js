@@ -102,14 +102,19 @@ function modulesManquants() {
           await ajout.click();
           await page.waitForTimeout(200);
           await verifier('いれる');
-          // Ajouter テレビ à la fin d'un moment, puis la déplacer dans la liste (mode 「うごかす」).
+          // Ajouter テレビ à la fin du soir, puis la déplacer dans la liste (mode 「うごかす」).
           await page.locator('.tuile-carte', { hasText: 'テレビ' }).click();
           await page.locator('.choix-pied .btn').click();
           await page.waitForTimeout(150);
+          const yoru = page.locator('.placer .chip', { hasText: 'よる' });
+          if (await yoru.count()) await yoru.click();
           await page.locator('.placer .place').last().click();
           await page.locator('.placer .choix-pied .btn').click();
           await page.waitForTimeout(250);
           const tele = page.locator('.liste-jour .act-btn', { hasText: 'テレビ' });
+          // En journée, テレビ (le soir) est dans la liste à venir ; la nuit, elle est déjà passée.
+          const journee = moment.includes('T10:') || moment.includes('T16:');
+          if (journee && !(await tele.count())) problemes.push(`${nom} ${moment} : テレビ absente de la liste`);
           if (await tele.count()) {
             await tele.first().click();
             await page.waitForTimeout(200);

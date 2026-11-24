@@ -37,9 +37,10 @@ import {
 import { lireElement, parler, sons } from '../voix.js';
 
 // On ne peut pas cocher une activité qui commence dans plus de 15 minutes (la nuit, 「おきる」 à 6:30…).
+// Une activité sans heure suit la même règle avec son heure calculée d'après sa place (debutEff).
 const AVANCE_MAX = 15;
-const tropTot = (dr, it) => (dr.aujourdhui && it.debut !== null && it.debut - dr.maintenant > AVANCE_MAX
-  ? Math.ceil(it.debut - dr.maintenant) : 0);
+const tropTot = (dr, it) => (dr.aujourdhui && it.debutEff !== null && it.debutEff - dr.maintenant > AVANCE_MAX
+  ? Math.ceil(it.debutEff - dr.maintenant) : 0);
 const estNuit = (m) => m >= 21 * 60 || m < 5 * 60;
 
 const peutAjouter = () => reglages.eleve === 'ajouter' || reglages.eleve === 'deplacer';
@@ -70,8 +71,8 @@ function carteMaintenant(d, dr) {
   }
   const c = actuel.carte;
   art.classList.add(`lieu-${c.lieu}`);
-  const fin = commence ? actuel.finEff : actuel.debut;
-  const debutPart = commence ? (actuel.debut ?? maintenant) : maintenant;
+  const fin = commence ? actuel.finEff : actuel.debutEff;
+  const debutPart = commence ? (actuel.debutEff ?? maintenant) : maintenant;
   const reste = fin !== null ? Math.max(0, Math.ceil(fin - maintenant)) : null;
   const etiquette = commence ? 'いま' : 'つぎ';
   const plage = plageHtml(actuel.act);
@@ -353,10 +354,10 @@ export function demanderFin(d, it) {
   // Le temps mis, et les variables des phrases.
   const categorie = categorieTemps(courant, m, dr.aujourdhui);
   const vars = { nom: { html: nomHtml(c), lire: nomLu(c) } };
-  if (courant.debut !== null) vars.debut = { html: heureHtml(courant.debut), lire: heureLue(courant.debut) };
+  if (courant.debutEff !== null) vars.debut = { html: heureHtml(courant.debutEff), lire: heureLue(courant.debutEff) };
   if (courant.finEff !== null) vars.fin = { html: heureHtml(courant.finEff), lire: heureLue(courant.finEff) };
   if (dr.aujourdhui && courant.finEff !== null && courant.finEff - m >= 1) vars.reste = varDuree(Math.ceil(courant.finEff - m));
-  if (dr.aujourdhui && courant.debut !== null && m - courant.debut >= 1) vars.duree = varDuree(Math.floor(m - courant.debut));
+  if (dr.aujourdhui && courant.debutEff !== null && m - courant.debutEff >= 1) vars.duree = varDuree(Math.floor(m - courant.debutEff));
   if (dr.aujourdhui && courant.finEff !== null && m - courant.finEff >= 1) vars.retard = varDuree(Math.floor(m - courant.finEff));
   const disponibles = Object.keys(vars);
   const reaction = composer(tirer(`r-${categorie}`, liste(categorie), disponibles) || 'おつかれさま！', vars);
@@ -370,7 +371,7 @@ export function demanderFin(d, it) {
   const contenu = el('div', { class: 'verif' });
   contenu.append(el('div', { class: `verif-tete lieu-${c.lieu}`, html: `${visuel(c, 'grand')}<span class="verif-nom">${nomHtml(c)}</span>` }));
   const bloc = el('div', { class: `verif-contexte verif-${categorie}`, 'data-lire': reaction.lire });
-  const finHorloge = categorie === 'avance' ? courant.debut : courant.finEff;
+  const finHorloge = categorie === 'avance' ? courant.debutEff : courant.finEff;
   if (reglages.horloge && dr.aujourdhui && finHorloge !== null && ['avance', 'tresTot', 'tot', 'libreTot', 'aLheure'].includes(categorie)) {
     bloc.insertAdjacentHTML('beforeend', svgHorloge(m, finHorloge, { titre: reaction.lire }));
   } else {
@@ -400,13 +401,13 @@ export function demanderFin(d, it) {
 function refuserFin(it, attente, m) {
   const c = it.carte;
   const nuit = estNuit(m);
-  const lire = `${nomLu(c)}は まだ だよ。 ${heureLue(it.debut)}から。 あと ${yomiDuree(attente)}。${nuit ? ' いまは よる。 ゆっくり やすもう。' : ''}`;
+  const lire = `${nomLu(c)}は まだ だよ。 ${heureLue(it.debutEff)}から。 あと ${yomiDuree(attente)}。${nuit ? ' いまは よる。 ゆっくり やすもう。' : ''}`;
   const contenu = el('div', { class: 'verif' });
   contenu.append(el('div', { class: `verif-tete lieu-${c.lieu}`, html: `${visuel(c, 'grand')}<span class="verif-nom">${nomHtml(c)}</span>` }));
   const bloc = el('div', { class: 'verif-contexte verif-avant', 'data-lire': lire });
-  if (reglages.horloge) bloc.insertAdjacentHTML('beforeend', svgHorloge(m, attente <= 60 ? it.debut : null, { titre: lire }));
+  if (reglages.horloge) bloc.insertAdjacentHTML('beforeend', svgHorloge(m, attente <= 60 ? it.debutEff : null, { titre: lire }));
   bloc.append(el('p', {
-    html: `${html('まだ だよ。')} ${heureHtml(it.debut)}${html('から。')} ${html(`（あと ${texteDuree(attente)}）`)}`,
+    html: `${html('まだ だよ。')} ${heureHtml(it.debutEff)}${html('から。')} ${html(`（あと ${texteDuree(attente)}）`)}`,
   }));
   contenu.append(bloc);
   if (nuit) contenu.append(el('p', { class: 'verif-question', html: `<i class="verif-lune" aria-hidden="true">🌙</i> ${html('今《いま》は 夜《よる》。 ゆっくり 休《やす》もう。')}` }));
@@ -483,8 +484,15 @@ function ouvrirActivite(d, it) {
   const dr = deroulement(d);
   const courant = dr.items.find((x) => x.act.id === it.act.id) || it;
   const contenu = el('div', { class: 'detail-activite' });
-  const plage = plageHtml(courant.act);
-  const tete = el('div', { class: `detail-tete lieu-${c.lieu}`, 'data-lire': `${nomLu(c)}。 ${plageLue(courant.act)}` });
+  let plage = plageHtml(courant.act);
+  let plageDite = plageLue(courant.act);
+  // Sans heure : l'heure calculée d'après sa place, 「だいたい」.
+  if (!plage && courant.debutEff !== null && !dr.passe) {
+    const fin = courant.finEff !== null ? courant.finEff : null;
+    plage = `<small class="detail-environ">${html('だいたい')}</small>${heureHtml(courant.debutEff)}${fin !== null ? `<span class="kara">〜</span>${heureHtml(fin, { sansMoment: (courant.debutEff < 720) === (fin < 720) })}` : ''}`;
+    plageDite = `だいたい ${heureLue(courant.debutEff)}から${fin !== null ? ` ${heureLue(fin)}まで` : ''}`;
+  }
+  const tete = el('div', { class: `detail-tete lieu-${c.lieu}`, 'data-lire': `${nomLu(c)}。 ${plageDite}` });
   tete.innerHTML = `${visuel(c, 'grand')}<div><p class="detail-nom">${nomHtml(c)}</p>${plage ? `<p class="detail-heures">${plage}</p>` : ''}</div>`;
   contenu.append(tete);
   if (courant.note && courant.note.photo) {
@@ -501,7 +509,7 @@ function ouvrirActivite(d, it) {
     } else if (dr.aujourdhui) {
       // Pas encore cochable : on dit quand ce sera possible.
       const cours = coursEnCours(dr, courant);
-      const quand = cours ? courant.fin - AVANT_FIN_COURS : courant.debut - 15;
+      const quand = cours ? courant.fin - AVANT_FIN_COURS : courant.debutEff - AVANCE_MAX;
       const t = `${heureLue(quand)}から チェック できるよ。`;
       contenu.append(el('p', { class: 'detail-info', 'data-lire': t, html: `${heureHtml(quand)}${html('から チェック できるよ。')}` }));
     }

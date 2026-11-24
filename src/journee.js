@@ -1,6 +1,7 @@
 /* ======================================================================
    Le déroulement d'une journée : ce qui est fait, passé, en cours, à venir
    - une activité sans heure de fin finit quand commence la suivante qui a une heure ;
+   - une activité sans heure reçoit une heure calculée d'après sa place (debutEff, finEff) ;
    - « いま » : la première activité ni faite ni passée (les cours passent seuls à l'heure,
      les activités de la maison sans heure attendent qu'on les coche) ;
    - si « いま » n'a pas encore commencé, on la montre comme « つぎ », avec le temps qui reste avant.
@@ -26,6 +27,8 @@ export const FIN_JOUR = 22 * 60;
 // Les cours ont une heure de fin fixe : on ne les coche pas avant (cartes de l'école, sauf les trajets).
 export const finFixe = (c) => (c.finFixe ?? (c.lieu === 'gakko' && !c.trajet));
 export const AVANT_FIN = 5;
+const PART_MIN = 15;
+const PART_FIN = 30;
 // Minutes avant la fin d'un cours (0 si on peut cocher).
 export const coursEnCours = (dr, it) => (dr.aujourdhui && finFixe(it.carte) && it.fin !== null && !it.passe && !it.fait
   && it.fin - dr.maintenant > AVANT_FIN ? Math.ceil(it.fin - dr.maintenant) : 0);
@@ -43,21 +46,51 @@ export function deroulement(d, maintenant = minutesMaintenant()) {
       act, carte: carte(act.carte), debut: versMinutes(act.debut), fin: versMinutes(act.fin), note, fait: Boolean(note && note.fait), index: i,
     };
   });
-  // Fin effective : sa fin ; sinon le début de la suivante qui a une heure. Une activité sans heure (ajoutée par
-  // l'élève) a au moins 15 minutes après la précédente, même si la suivante commence tout de suite.
-  items.forEach((it, i) => {
-    let suivante = null;
+  // Fin effective d'une activité à heure : sa fin ; sinon le début de la suivante qui a une heure.
+  const suivanteApres = (i, debut) => {
     for (let j = i + 1; j < items.length; j++) {
       const dj = items[j].debut;
-      if (dj !== null && (it.debut === null || dj > it.debut)) { suivante = dj; break; }
+      if (dj !== null && (debut === null || dj > debut)) return dj;
     }
-    if (it.fin !== null) it.finEff = it.fin;
-    else if (it.debut !== null) it.finEff = suivante;
-    else {
-      const avant = i > 0 ? items[i - 1].finEff : null;
-      it.finEff = suivante === null ? null : Math.max(suivante, avant !== null ? avant + 15 : suivante);
-    }
+    return null;
+  };
+  items.forEach((it, i) => {
+    it.debutEff = it.debut;
+    if (it.debut !== null) it.finEff = it.fin !== null ? it.fin : suivanteApres(i, it.debut);
   });
+  // Une activité sans heure reçoit une heure calculée d'après sa place, pour suivre les mêmes règles que les
+  // autres (いま / つぎ, pas de 「おわった」 plus de 15 minutes avant). Le temps entre l'activité à heure qui la
+  // précède et la suivante est partagé : avec la précédente si elle n'a pas d'heure de fin, sinon après sa fin.
+  // Des parts de 5 en 5 minutes, au moins 15 minutes ; 30 minutes après la dernière activité de la journée.
+  for (let i = 0; i < items.length;) {
+    if (items[i].debut !== null) { i += 1; continue; }
+    let j = i;
+    while (j < items.length && items[j].debut === null) j += 1;
+    const groupe = items.slice(i, j);
+    const a = i > 0 ? items[i - 1] : null;
+    const b = suivanteApres(j - 1, a ? a.debut : null);
+    let t = null;
+    let part = PART_MIN;
+    if (a) {
+      const partage = a.fin === null;
+      const depart = partage ? a.debut : a.fin;
+      const parts = groupe.length + (partage ? 1 : 0);
+      if (b === null) part = PART_FIN;
+      else if (b > depart) part = Math.max(PART_MIN, Math.floor((b - depart) / parts / 5) * 5);
+      t = depart;
+      if (partage) { a.finEff = depart + part; t += part; }
+    } else if (b !== null) {
+      t = b - PART_MIN * groupe.length;   // tout au début de la liste : juste avant la première heure
+    }
+    groupe.forEach((it) => {
+      it.debutEff = t;
+      it.finEff = t === null ? null : t + part;
+      if (t !== null) t += part;
+    });
+    const dernier = groupe[groupe.length - 1];
+    if (b !== null && dernier.finEff !== null && dernier.finEff < b) dernier.finEff = b;
+    i = j;
+  }
   // Le moment de chaque activité ; une activité sans heure suit la précédente.
   let periode = PERIODES[0];
   items.forEach((it) => {
@@ -82,7 +115,7 @@ export function deroulement(d, maintenant = minutesMaintenant()) {
     else it.statut = it.passe ? 'passe' : 'avenir';
   });
   const actuel = iActuel >= 0 ? items[iActuel] : null;
-  const commence = Boolean(actuel) && (actuel.debut === null || actuel.debut <= maintenant);
+  const commence = Boolean(actuel) && (actuel.debutEff === null || actuel.debutEff <= maintenant);
   const suivant = actuel ? items.slice(iActuel + 1).find((it) => !it.fait && !it.passe) || null : null;
   return { items, actuel, commence, suivant, maintenant, aujourdhui: k === kAuj, passe: k < kAuj };
 }

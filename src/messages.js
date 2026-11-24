@@ -169,10 +169,11 @@ export function composer(modele, vars) {
 export const varDuree = (min) => ({ html: html(texteDuree(min), { mots: false }), lire: yomiDuree(min) });
 
 /* ----- La catégorie du temps mis -----
-   m : maintenant (minutes) ; it : l'activité (debut, fin, finEff, passe). */
+   m : maintenant (minutes) ; it : l'activité (debut, debutEff, fin, finEff, passe). */
 export function categorieTemps(it, m, aujourdhui) {
   if (!aujourdhui) return it.passe ? 'tard' : 'sansHeure';
-  if (it.debut !== null && it.debut > m) return 'avance';
+  const debut = it.debutEff ?? it.debut;   // l'heure calculée pour une activité sans heure
+  if (debut !== null && debut > m) return 'avance';
   if (it.finEff === null) return it.passe ? 'tard' : 'sansHeure';
   const reste = it.finEff - m;
   // « Tôt » seulement pour une vraie heure de fin : sans elle, l'activité dure jusqu'à la suivante
@@ -180,8 +181,8 @@ export function categorieTemps(it, m, aujourdhui) {
   if (reste >= 10 && it.fin !== null) {
     // Temps libre ou loisir : s'arrêter avant la fin n'est pas « trop vite ».
     if (it.carte && it.carte.libre) return 'libreTot';
-    const duree = it.debut !== null ? it.finEff - it.debut : null;
-    const ecoule = it.debut !== null ? m - it.debut : null;
+    const duree = debut !== null ? it.finEff - debut : null;
+    const ecoule = debut !== null ? m - debut : null;
     return duree && ecoule !== null && ecoule < duree / 2 ? 'tresTot' : 'tot';
   }
   if (reste > -5) return 'aLheure';
