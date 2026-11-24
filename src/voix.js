@@ -30,7 +30,8 @@ export function parler(texte, fin) {
     return;
   }
   try {
-    plateforme.voix.parler(String(texte), {
+    // 「LINE」 : certaines voix l'épellent (エル・アイ・エヌ・イー) ; on le dit ライン.
+    plateforme.voix.parler(String(texte).replace(/LINE/g, 'ライン'), {
       voix: voixJaponaise(),
       rate: Number(reglages.vitesse) || 0.9,
       pitch: voixGrave() ? 0.6 : 1,

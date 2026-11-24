@@ -9,7 +9,7 @@
    ====================================================================== */
 
 import { choisirCarte } from '../choix-carte.js';
-import { carte, noter } from '../donnees.js';
+import { carte, modeleDu, noter } from '../donnees.js';
 import { aujourdhui, cle, JOURS_SEMAINE, minutesMaintenant, texteNbJours } from '../heure.js';
 import { deroulement, mochimonoDu, PERIODES } from '../journee.js';
 import { el } from '../outils.js';
@@ -364,13 +364,20 @@ export function lancerEcole(d, apres = () => {}, { depart = null } = {}) {
 
 const NOMS_ENVOI = { line: 'LINEで おくる', mail: 'メールで おくる', partage: 'おくる' };
 
-// Combien de jours d'école de suite il a envoyé (jusqu'à d compris).
+// Combien de jours d'école de suite il a envoyé (jusqu'à d compris). Un jour d'école sans aucun compte rendu
+// arrête la série ; un jour sans école (week-end, vacances) ne compte pas et ne l'arrête pas.
+const jourDEcole = (j) => modeleDu(j).some((a) => (carte(a.carte) || {}).lieu === 'gakko');
 export function joursDeSuite(d) {
+  const dates = Object.keys(reponses).sort();
+  if (!dates.length) return 0;
   let n = 0;
-  for (const [k, r] of historiqueEcole()) {
-    if (k > cle(d)) continue;
-    if (!r.fini || !r.envoye) break;
-    n += 1;
+  const j = new Date(d);
+  for (let i = 0; i < 400 && cle(j) >= dates[0]; i++, j.setDate(j.getDate() - 1)) {
+    const r = reponses[cle(j)];
+    if (r) {
+      if (!r.fini || !r.envoye) break;
+      n += 1;
+    } else if (jourDEcole(j)) break;
   }
   return n;
 }
