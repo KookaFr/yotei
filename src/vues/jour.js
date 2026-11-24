@@ -16,6 +16,9 @@ import { barre, repereGrandeAiguille, svgHorloge } from '../horloge.js';
 import {
   deroulement, indexPeriode, mochimonoDu, PERIODES,
 } from '../journee.js';
+import {
+  categorieTemps, composer, liste, questionsCarte, tirer, varDuree,
+} from '../messages.js';
 import { nav } from '../nav.js';
 import { el } from '../outils.js';
 import { chargerPhotos, nouvellePhoto, supprimerPhoto } from '../photos.js';
@@ -283,11 +286,11 @@ export function rendreJour(conteneur, d = aujourdhui(), { retour = null } = {}) 
   return page;
 }
 
-/* ----- 「おわった」 : d'abord regarder l'heure, puis une question de vérification -----
-   - pas encore commencée : 「まだ はじまって いないよ。 4:40から。」 ;
-   - encore 10 minutes ou plus : 「5:00まで だよ。 あと 25ふん あるよ。」, avec l'horloge ;
-   puis la question de la carte (「お皿を かたづけた？」) ou 「ほんとうに おわった？」 / 「おわった？」.
-   「うん」 coche ; 「まだ」 ferme avec un encouragement. */
+/* ----- 「おわった」 : d'abord une réaction au temps mis, puis une question de vérification -----
+   Les phrases sont tirées de listes (messages.js), selon le temps mis : avance, très tôt, tôt, à l'heure,
+   après coup, sans heure. La question : celle de la carte, sinon une question générale (plus insistante
+   quand c'est fini tôt). 「うん」 coche ; 「まだ」 ferme avec un encouragement.
+   Une activité qui commence dans plus de 15 minutes ne peut pas être cochée (refuserFin). */
 
 export function demanderFin(d, it) {
   const dr = deroulement(d);
@@ -297,39 +300,40 @@ export function demanderFin(d, it) {
   const attente = tropTot(dr, courant);
   if (attente) { refuserFin(courant, attente, m); return; }
   if (!reglages.verifier) { marquerFait(d, it); return; }
-  let contexte = null;
-  if (dr.aujourdhui && courant.debut !== null && courant.debut - m >= 1) {
-    const dans = Math.ceil(courant.debut - m);
-    contexte = {
-      sorte: 'avant', fin: courant.debut,
-      html: `${html('まだ はじまって いないよ。')} ${heureHtml(courant.debut)}${html('から。')} ${html(`（あと ${texteDuree(dans)}）`)}`,
-      lire: `まだ はじまって いないよ。 ${heureLue(courant.debut)}から。 あと ${yomiDuree(dans)}。`,
-      encore: 'わかった。 じかんに なったら はじめようね。',
-    };
-  } else if (dr.aujourdhui && !courant.passe && courant.finEff !== null && courant.finEff - m >= 10) {
-    const reste = Math.ceil(courant.finEff - m);
-    contexte = {
-      sorte: 'tot', fin: courant.finEff,
-      html: `${heureHtml(courant.finEff)}${html('まで だよ。')} ${html(`あと ${texteDuree(reste)} あるよ。`)}`,
-      lire: `${heureLue(courant.finEff)}まで だよ。 あと ${yomiDuree(reste)} あるよ。`,
-      encore: 'わかった。 さいごまで がんばろう！',
-    };
-  }
-  const question = c.verif || (contexte ? 'ほんとうに おわった？' : `${c.nom}、 おわった？`);
+
+  // Le temps mis, et les variables des phrases.
+  const categorie = categorieTemps(courant, m, dr.aujourdhui);
+  const vars = { nom: { html: nomHtml(c), lire: nomLu(c) } };
+  if (courant.debut !== null) vars.debut = { html: heureHtml(courant.debut), lire: heureLue(courant.debut) };
+  if (courant.finEff !== null) vars.fin = { html: heureHtml(courant.finEff), lire: heureLue(courant.finEff) };
+  if (dr.aujourdhui && courant.finEff !== null && courant.finEff - m >= 1) vars.reste = varDuree(Math.ceil(courant.finEff - m));
+  if (dr.aujourdhui && courant.debut !== null && m - courant.debut >= 1) vars.duree = varDuree(Math.floor(m - courant.debut));
+  if (dr.aujourdhui && courant.finEff !== null && m - courant.finEff >= 1) vars.retard = varDuree(Math.floor(m - courant.finEff));
+  const disponibles = Object.keys(vars);
+  const reaction = composer(tirer(`r-${categorie}`, liste(categorie), disponibles) || 'おつかれさま！', vars);
+  const propres = questionsCarte(c);
+  const generale = categorie === 'avance' || categorie === 'tresTot' ? 'verifFort' : 'verifNormal';
+  const modeleQ = (propres.length ? tirer(`q-${c.id}`, propres, disponibles) : null)
+    || tirer(generale, liste(generale), disponibles) || 'おわった？';
+  const question = composer(modeleQ, vars);
+
   const contenu = el('div', { class: 'verif' });
   contenu.append(el('div', { class: `verif-tete lieu-${c.lieu}`, html: `${visuel(c, 'grand')}<span class="verif-nom">${nomHtml(c)}</span>` }));
-  if (contexte) {
-    const bloc = el('div', { class: `verif-contexte verif-${contexte.sorte}`, 'data-lire': contexte.lire });
-    if (reglages.horloge) bloc.insertAdjacentHTML('beforeend', svgHorloge(m, contexte.fin, { titre: contexte.lire }));
-    bloc.append(el('p', { html: contexte.html }));
-    contenu.append(bloc);
+  const bloc = el('div', { class: `verif-contexte verif-${categorie}`, 'data-lire': reaction.lire });
+  const finHorloge = categorie === 'avance' ? courant.debut : courant.finEff;
+  if (reglages.horloge && dr.aujourdhui && finHorloge !== null && ['avance', 'tresTot', 'tot', 'aLheure'].includes(categorie)) {
+    bloc.insertAdjacentHTML('beforeend', svgHorloge(m, finHorloge, { titre: reaction.lire }));
+  } else {
+    bloc.insertAdjacentHTML('beforeend', `<i class="verif-emoji" aria-hidden="true">${{ tard: '👍', sansHeure: '🌟' }[categorie] || '⏰'}</i>`);
   }
-  contenu.append(el('p', { class: 'verif-question', 'data-lire': lu(question), html: html(question) }));
+  bloc.append(el('p', { html: reaction.html }));
+  contenu.append(bloc);
+  contenu.append(el('p', { class: 'verif-question', 'data-lire': question.lire, html: question.html }));
   const actions = el('div', { class: 'verif-actions' });
   actions.append(
     bouton('まだ', () => {
       fermerFeuille();
-      parler(contexte ? contexte.encore : 'わかった。 おわったら また おしてね。');
+      parler(composer(tirer('mada', liste('mada'), disponibles) || 'わかった。', vars).lire);
     }, { classe: 'btn btn-large', icone: ICONE_RETOUR }),
     bouton('うん', () => { fermerFeuille(); marquerFait(d, courant); }, { classe: 'btn btn-large btn-fait', icone: ICONE_COCHE }),
   );
@@ -338,7 +342,7 @@ export function demanderFin(d, it) {
     contenu.append(bouton('てじゅんを 見《み》る', () => { fermerFeuille(); lancerEtapes(d, courant); }, { classe: 'btn verif-etapes', icone: ICONE_ETAPES }));
   }
   ouvrirFeuille({ titre: '', contenu, classe: 'feuille-verif' });
-  parler(`${contexte ? `${contexte.lire} ` : ''}${lu(question)}`);
+  parler(`${reaction.lire} ${question.lire}`);
 }
 
 // Trop tôt : on explique, et on ne coche pas (un seul bouton 「わかった」).

@@ -921,3 +921,10 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .m-attente i, .verif-lune { font-style: normal; font-family: var(--emoji); font-size: 1.5em; }
 .m-nuit { background: #1f2747; color: #eef2ff; border-color: #5a6aa8; }
 .verif-ok { width: 100%; }
+
+/* Réaction au temps mis : couleur selon la catégorie */
+.verif-contexte.verif-aLheure, .verif-contexte.verif-sansHeure { border-color: var(--bon); }
+.verif-contexte.verif-tard { border-color: var(--bord); }
+.verif-contexte.verif-tot { border-color: #d99a00; }
+.verif-emoji { font-style: normal; font-family: var(--emoji); font-size: 2.6em; line-height: 1; }
+.p-texte { width: 100%; min-height: 4.5em; padding: 8px 10px; border: 2px solid var(--bord); border-radius: 12px; background: var(--papier); line-height: 1.5; resize: vertical; }

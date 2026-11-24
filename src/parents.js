@@ -13,6 +13,9 @@ import {
 import {
   ajouterJours, aujourdhui, cle, deCle, JOURS_SEMAINE, versMinutes, versTexte,
 } from './heure.js';
+import {
+  CATEGORIES, changerListe, liste, MESSAGES_DEFAUT, questionsCarte,
+} from './messages.js';
 import { $, copie, echapper, el, uid } from './outils.js';
 import {
   chargerPhotos, nouvellePhoto, photosDepuisTexte, photosEnTexte, supprimerPhoto,
@@ -69,6 +72,7 @@ export function rendreParents() {
     section('calendrier', L('Calendrier : événements et vacances', 'カレンダー：行事と 休み'), blocCalendrier()),
     section('etapes', L('Étapes (てじゅん)', 'てじゅん'), blocRoutines()),
     section('cartes', L('Cartes et photos', 'カードと 写真'), blocCartes()),
+    section('messages', L('Messages de 「おわった」', '「おわった」の ことば'), blocMessages()),
     section('reglages', L('Réglages', 'せってい'), blocReglages()),
     section('sauvegarde', L('Sauvegarde, autre appareil', 'バックアップ・ほかの 機器へ'), blocSauvegarde()),
   );
@@ -404,8 +408,9 @@ function editerCarte(c0) {
   lieu.addEventListener('change', () => { c.lieu = lieu.value; });
   const recit = el('input', { type: 'text', value: c.recit || '', placeholder: L('Ex. バスに 乗《の》りました。', '例：バスに 乗《の》りました。') });
   recit.addEventListener('input', () => { c.recit = recit.value; });
-  const verif = el('input', { type: 'text', value: c.verif || '', placeholder: L('Ex. お皿《さら》を かたづけた？', '例：お皿《さら》を かたづけた？') });
-  verif.addEventListener('input', () => { c.verif = verif.value.trim(); });
+  const verif = el('textarea', { rows: '3', class: 'p-texte', placeholder: L('Ex. お皿《さら》を かたづけた？', '例：お皿《さら》を かたづけた？') });
+  verif.value = questionsCarte(c).join('\n');
+  verif.addEventListener('input', () => { c.verif = verif.value.split('\n').map((q) => q.trim()).filter(Boolean); });
   const routineSel = el('select', {});
   routineSel.append(el('option', { value: '', text: L('— aucune —', '— なし —') }));
   etat.routines.forEach((r) => routineSel.append(el('option', { value: r.id, text: lu(r.nom), selected: c.routine === r.id })));
@@ -454,8 +459,8 @@ function editerCarte(c0) {
     el('div', { class: 'p-champ' }, el('span', { class: 'p-label', text: L('Photo', '写真') }), photoBtns),
     champ(L('Lieu (couleur)', '場所（色）'), lieu),
     champ(L('Phrase du soir (ふりかえり)', 'ふりかえりの 文'), recit, L('Au passé : ce que l\'enfant a fait.', '「〜しました」の 形で')),
-    champ(L('Question de vérification (「おわった」)', 'たしかめる 質問（「おわった」の とき）'), verif,
-      L('Posée avant de cocher. Vide : 「おわった？」.', 'チェックの 前に 聞きます。空なら「おわった？」。')),
+    champ(L('Questions de vérification (「おわった」), une par ligne', 'たしかめる 質問（「おわった」の とき）：1行に 1つ'), verif,
+      L("Une est tirée au hasard. Vide : une question générale (section « Messages de 「おわった」 »).", 'どれか 1つを 聞きます。空なら ふつうの 質問。')),
     el('div', { class: 'p-champ' }, el('span', { class: 'p-label', text: L('もちもの (affaires à emporter ce jour-là)', 'もちもの（その日に もっていく もの）') }), affaires,
       el('small', { class: 'p-aide', text: L('Elles apparaissent dans la semaine, dans 「きょう」, et comme étapes dans 「あしたの じゅんび」 la veille.',
         '「こんしゅう」「きょう」に 出て、前の日の「明日の 準備」の てじゅんにも 入ります。') })),
@@ -488,6 +493,50 @@ function editerCarte(c0) {
   }
   contenu.append(actions);
   ouvrirFeuille({ titre: L('Carte', 'カード'), contenu, classe: 'feuille-haute feuille-parents', fermeture: () => rendreParents() });
+}
+
+/* ----- Messages de 「おわった」 : une liste de phrases par catégorie ----- */
+
+const EXEMPLE_VARS = {
+  nom: 'おやつ', debut: 'ごご 4:40', fin: 'ごご 5:00', reste: '11ぷん', duree: '9ふん', retard: '20ぷん',
+};
+const EXEMPLE_LU = {
+  nom: 'おやつ', debut: 'ごご よじ よんじゅっぷん', fin: 'ごご ごじ', reste: 'じゅういっぷん', duree: 'きゅうふん', retard: 'にじゅっぷん',
+};
+
+function blocMessages() {
+  const b = el('div');
+  b.append(el('p', { class: 'p-aide', text: L(
+    "Quand votre enfant appuie sur 「おわった」, l'appli dit d'abord une réaction au temps mis (selon l'heure), puis pose une question de vérification : celle de la carte s'il y en a, sinon une question générale. Une phrase est tirée au hasard dans la liste, jamais deux fois de suite la même. Une phrase par ligne ; hiragana, ou kanji suivis de leur lecture.",
+    '「おわった」を おすと、まず かかった 時間への ひとこと、つぎに たしかめる 質問が 出ます（カードの 質問、なければ ふつうの 質問）。リストから ランダムに えらびます（同じ ものは つづけて 出ません）。1行に 1つ。',
+  ) }));
+  b.append(el('p', { class: 'p-aide', text: L(
+    'Variables : {nom} activité · {debut} heure de début · {fin} heure de fin · {reste} temps restant · {duree} temps passé · {retard} retard. Une phrase dont une variable manque (activité sans heure…) est sautée.',
+    '{nom} 予定の 名前・{debut} はじまり・{fin} おわり・{reste} のこりの 時間・{duree} かかった 時間・{retard} おくれた 時間',
+  ) }));
+  let groupe = '';
+  CATEGORIES.forEach((cat) => {
+    if (cat.groupe !== groupe) {
+      groupe = cat.groupe;
+      b.append(el('p', { class: 'p-sous-titre', text: { reaction: L('1. Réaction au temps mis', '1. かかった 時間への ひとこと'), question: L('2. Question de vérification (si la carte n\'en a pas)', '2. たしかめる 質問（カードに ない とき）'), mada: L('3. Après 「まだ」', '3. 「まだ」の あと') }[groupe] }));
+    }
+    const zone = el('textarea', { rows: String(Math.max(3, liste(cat.id).length)), class: 'p-texte' });
+    zone.value = liste(cat.id).join('\n');
+    zone.addEventListener('change', () => { changerListe(cat.id, zone.value.split('\n')); });
+    const ecouter = btnP(L('Écouter', 'きく'), () => {
+      const phrases = zone.value.split('\n').map((p) => p.trim()).filter(Boolean);
+      if (!phrases.length) return;
+      const p = phrases[Math.floor(Math.random() * phrases.length)];
+      parler(lu(p.replace(/\{(\w+)\}/g, (x, v) => EXEMPLE_LU[v] || '')));
+    });
+    const retablir = btnP(L('Rétablir', 'もとに もどす'), () => {
+      changerListe(cat.id, []);
+      zone.value = MESSAGES_DEFAUT[cat.id].join('\n');
+    }, 'btn btn-petit btn-danger');
+    b.append(el('div', { class: 'p-champ' }, el('span', { class: 'p-label', text: L(cat.fr, cat.ja) }), zone, el('div', { class: 'p-ligne' }, ecouter, retablir)));
+  });
+  b.append(el('p', { class: 'p-aide', text: L(`Exemple des variables : ${Object.entries(EXEMPLE_VARS).map(([k, v]) => `{${k}} = ${v}`).join(' · ')}`, '') }));
+  return b;
 }
 
 /* ----- Réglages ----- */
