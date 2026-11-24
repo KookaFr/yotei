@@ -6,7 +6,7 @@
 
 import { choisirCarte } from '../choix-carte.js';
 import {
-  carte, changerLoisirs, estCadreLibre, estLoisir, evenementsDu, mettreDansLibre, modifierJour, noter, nouvelleActivite, oublier,
+  carte, changerLoisirs, estCadreLibre, estLoisir, estSommeil, evenementsDu, mettreDansLibre, modifierJour, noter, nouvelleActivite, oublier,
   prochainsEvenements, routine, sorteDuJour, toutesLesCartes, trierParHeure,
 } from '../donnees.js';
 import {
@@ -64,6 +64,7 @@ function carteMaintenant(d, dr) {
     return art;
   }
   const { actuel, commence, maintenant } = dr;
+  if (!actuel && dr.aujourdhui && estNuit(maintenant)) return carteNuit(d, art);
   if (!actuel) {
     art.classList.add('maintenant-fin');
     art.innerHTML = `<p class="m-etiquette">${html('おわり')}</p><p class="m-fin" data-lire="きょうの よていは ぜんぶ おわったよ。 おつかれさま！">`
@@ -130,8 +131,32 @@ function carteMaintenant(d, dr) {
   const actions = el('div', { class: 'm-actions' });
   const r = c.routine && routine(c.routine);
   if (r) actions.append(bouton('てじゅん', () => lancerEtapes(d, actuel), { classe: 'btn btn-large', icone: ICONE_ETAPES }));
-  actions.append(bouton('おわった', () => demanderFin(d, actuel), { classe: 'btn btn-principal btn-large btn-fait', icone: ICONE_COCHE }));
+  if (estSommeil(c)) {
+    // 寝る : pas 「おわった」 ; 「おやすみ」 quand il va au lit.
+    const texte = 'ふとんに 入《はい》る 時間《じかん》だよ。';
+    art.append(el('p', { class: 'm-attente m-nuit', 'data-lire': lu(texte), html: `<i aria-hidden="true">🌙</i><span>${html(texte)}</span>` }));
+    art.dataset.lire = `${parole} ${lu(texte)}`;
+    actions.append(bouton('おやすみ', () => demanderFin(d, actuel), { classe: 'btn btn-principal btn-large btn-fait btn-nuit', icone: '<i aria-hidden="true">🌙</i>' }));
+  } else {
+    actions.append(bouton('おわった', () => demanderFin(d, actuel), { classe: 'btn btn-principal btn-large btn-fait', icone: ICONE_COCHE }));
+  }
   art.append(actions);
+  return art;
+}
+
+// La nuit, une fois couché (ou la journée finie) : bonne nuit, et ce qui vient demain matin.
+function carteNuit(d, art) {
+  art.classList.add('maintenant-fin', 'maintenant-nuit');
+  const demain = deroulement(ajouterJours(d, 1)).items.find((it) => it.debut !== null);
+  let lire = 'おやすみなさい。 ゆっくり やすもう。';
+  let suite = '';
+  if (demain) {
+    lire += ` あしたは ${heureLue(demain.debut)}に ${nomLu(demain.carte)}。`;
+    suite = `<p class="m-demain" aria-hidden="true">${html('あしたは')} ${heureHtml(demain.debut)} ${visuel(demain.carte)} <b>${nomHtml(demain.carte)}</b></p>`;
+  }
+  art.innerHTML = `<p class="m-etiquette">${html('よる')}</p><p class="m-fin" data-lire="${lire}"><span class="m-fin-emoji" aria-hidden="true">🌙</span>`
+    + `${html('おやすみなさい。 ゆっくり 休《やす》もう。')}</p>${suite}`;
+  art.dataset.lire = lire;
   return art;
 }
 
@@ -310,7 +335,8 @@ export function rendreJour(conteneur, d = aujourdhui(), { retour = null } = {}) 
       page.append(el('h2', { class: 'titre-liste', 'data-lire': lu(titre), html: html(titre) }), listeParMoments(d, aVenir));
     }
     if (finies.length) {
-      const ouvert = voirFinies || !dr.actuel;
+      // Journée finie : la liste de ce qui est fait s'ouvre (sauf la nuit, où l'écran dit bonne nuit).
+      const ouvert = voirFinies || (!dr.actuel && !(estAuj && estNuit(dr.maintenant)));
       const b = el('button', {
         type: 'button', class: 'titre-finies', 'aria-expanded': String(ouvert), 'aria-label': `おわった こと、 ${finies.length}こ`,
         html: `${ICONE_COCHE}<span>${html('おわった こと')}</span><span class="nb-finies">${finies.length}</span>`
@@ -357,6 +383,7 @@ export function demanderFin(d, it) {
   if (attente) { refuserFin(courant, attente, m); return; }
   const reste = coursEnCours(dr, courant);
   if (reste) { refuserCours(courant, reste, m); return; }
+  if (estSommeil(c)) { demanderCoucher(d, courant); return; }
   if (!reglages.verifier) { marquerFait(d, it); return; }
 
   // Le temps mis, et les variables des phrases.
@@ -408,6 +435,28 @@ export function demanderFin(d, it) {
   parler(`${reaction.lire} ${question.lire}`);
 }
 
+// 寝る : pas de réaction au temps mis ; une question du soir (「ふとんに 入った？」), puis 「おやすみなさい」.
+function demanderCoucher(d, it) {
+  const c = it.carte;
+  if (!reglages.verifier) { marquerFait(d, it, { proposer: false }); return; }
+  const propres = questionsCarte(c);
+  const question = composer((propres.length ? tirer(`q-${c.id}`, propres, ['nom']) : null) || 'ねる じゅんびは できた？', { nom: { html: nomHtml(c), lire: nomLu(c) } });
+  const contenu = el('div', { class: 'verif' });
+  contenu.append(el('div', { class: `verif-tete lieu-${c.lieu}`, html: `${visuel(c, 'grand')}<span class="verif-nom">${nomHtml(c)}</span>` }));
+  const bloc = el('div', { class: 'verif-contexte verif-nuit', 'data-lire': 'おやすみの まえに。' });
+  bloc.innerHTML = `<i class="verif-emoji" aria-hidden="true">🌙</i><p>${html('おやすみの まえに')}</p>`;
+  contenu.append(bloc);
+  contenu.append(el('p', { class: 'verif-question', 'data-lire': question.lire, html: question.html }));
+  const actions = el('div', { class: 'verif-actions' });
+  actions.append(
+    bouton('まだ', () => { fermerFeuille(); parler('じゅんびが できたら おしてね。'); }, { classe: 'btn btn-large', icone: ICONE_RETOUR }),
+    bouton('うん', () => { fermerFeuille(); marquerFait(d, it, { proposer: false }); }, { classe: 'btn btn-large btn-fait', icone: ICONE_COCHE }),
+  );
+  contenu.append(actions);
+  ouvrirFeuille({ titre: '', contenu, classe: 'feuille-verif' });
+  parler(`おやすみの まえに。 ${question.lire}`);
+}
+
 // Trop tôt : on explique, et on ne coche pas (un seul bouton 「わかった」).
 function refuserFin(it, attente, m) {
   const c = it.carte;
@@ -453,7 +502,7 @@ export function marquerFait(d, it, { proposer = true } = {}) {
   sons.succes();
   const apres = deroulement(d);
   const suite = apres.actuel && apres.actuel.act.id !== it.act.id ? ` つぎは ${nomLu(apres.actuel.carte)}。` : '';
-  parler(`${nomLu(it.carte)}、 おわったね。${suite}`);
+  parler(estSommeil(it.carte) ? 'おやすみなさい。' : `${nomLu(it.carte)}、 おわったね。${suite}`);
   nav.rafraichir();
   if (proposer && reglages.photos && !it.carte.sansPhoto) setTimeout(() => proposerPhoto(d, it), 700);
 }
@@ -517,7 +566,9 @@ function ouvrirActivite(d, it) {
     if (courant.fait) {
       actions.append(bouton('まだ', () => { oublierFait(d, courant); fermerFeuille(); }, { classe: 'btn', icone: ICONE_RETOUR }));
     } else if (dr.passe || (dr.aujourdhui && !tropTot(dr, courant) && !coursEnCours(dr, courant))) {
-      actions.append(bouton('おわった', () => { fermerFeuille(); demanderFin(d, courant); }, { classe: 'btn btn-principal', icone: ICONE_COCHE }));
+      actions.append(estSommeil(c)
+        ? bouton('おやすみ', () => { fermerFeuille(); demanderFin(d, courant); }, { classe: 'btn btn-principal btn-nuit', icone: '<i aria-hidden="true">🌙</i>' })
+        : bouton('おわった', () => { fermerFeuille(); demanderFin(d, courant); }, { classe: 'btn btn-principal', icone: ICONE_COCHE }));
     } else if (dr.aujourdhui) {
       // Pas encore cochable : on dit quand ce sera possible.
       const cours = coursEnCours(dr, courant);

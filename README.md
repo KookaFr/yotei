@@ -37,6 +37,8 @@ Le temps libre et les loisirs (自由時間, ゲーム, テレビ, 動画, 散�
 
 Chaque catégorie a sa liste de phrases (`src/messages.js`) ; une phrase est tirée au hasard, jamais deux fois de suite la même, et une phrase dont une variable manque est sautée. Variables : {nom} {debut} {fin} {reste} {duree} {retard}. 「うん」 coche, 「まだ」 ferme avec un encouragement tiré lui aussi d'une liste. Les parents modifient toutes les listes et les questions de chaque carte (une par ligne) ; elles voyagent avec la sauvegarde.
 
+**La nuit, 寝る** : on ne « finit » pas 寝る. Sa carte dit 「ふとんに 入る 時間だよ。」 et le bouton est 「🌙 おやすみ」 (pas 「おわった」) : une question du soir (「ふとんに 入った？」, 「電気を 消した？」), puis 「おやすみなさい」. Ensuite, et chaque fois que la journée est finie la nuit (après 21 h), 「きょう」 montre 「おやすみなさい。 ゆっくり 休もう。」 et ce qui vient demain matin (「あしたは ごぜん 6:30 ⏰ 起きる」), la liste de ce qui est fait reste repliée. Après minuit, le lendemain s'affiche avec 「いまは よる。 ゆっくり やすもう。」 (rien à cocher avant 6:15).
+
 **Annonces** (appli ouverte) : un carillon et 「〜の じかんだよ」 au début d'une activité, 「あと 5ふんで おわりだよ」 avant la fin.
 
 ## Ce que règlent les parents (appui long sur 「おうちの人」)

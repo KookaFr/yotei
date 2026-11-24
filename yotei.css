@@ -1084,3 +1084,14 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .place-dedans > span[aria-hidden] { font-family: var(--emoji); }
 .place-case-dedans { margin: -2px 0 2px 24px; }
 .ed-loisirs { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+/* La nuit : 「おやすみ」 et bonne nuit */
+.btn-nuit, :root[data-theme="dark"] .btn-nuit { background: #34408a; border-color: #34408a; color: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn-nuit { color: #fff; } }
+.btn-nuit i { font-style: normal; font-family: var(--emoji); }
+.maintenant-nuit { --lieu: #5363c4; --lieu-fond: var(--surface); }
+.maintenant-nuit .m-etiquette { background: #5363c4; }
+.verif-contexte.verif-nuit { border-color: #5363c4; }
+.verif-nuit .verif-emoji { font-family: var(--emoji); }
+.m-demain { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; margin: 4px 0 0; font-size: 1.1em; }
+.m-demain .visuel { font-size: 1.4em; }

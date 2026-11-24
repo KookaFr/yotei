@@ -79,7 +79,7 @@ export const CARTES = [
   c('kusuri', 'ie', '💊', '薬《くすり》', '薬《くすり》を 飲《の》みました。', { sansPhoto: true }),
   c('ashita', 'ie', '📋', '明日《あした》の 準備《じゅんび》', '明日《あした》の 準備《じゅんび》を しました。', { routine: 'mochimono' }),
   c('yorushitaku', 'ie', '🌙', '夜《よる》の したく', '夜《よる》の したくを しました。', { routine: 'yoru' }),
-  c('neru', 'ie', '🛏️', '寝《ね》る', '', { sansPhoto: true, verif: ['ふとんに 入《はい》った？', '電気《でんき》を 消《け》した？'] }),
+  c('neru', 'ie', '🛏️', '寝《ね》る', '', { sansPhoto: true, sommeil: true, verif: ['ふとんに 入《はい》った？', '電気《でんき》を 消《け》した？'] }),
   // --- Dehors ---
   c('dei', 'soto', '🏡', '放課後《ほうかご》 デイ', '放課後《ほうかご》 デイに 行《い》きました。'),
   c('sanpo', 'soto', '🚶', '散歩《さんぽ》', '散歩《さんぽ》を しました。', { libre: true }),

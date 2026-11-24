@@ -149,6 +149,8 @@ export function trierParHeure(liste) {
    act.loisirs = ['terebi', 'game']. Ils n'ont pas d'heure à eux : ils se font pendant le créneau. */
 export const estCadreLibre = (c) => Boolean(c && c.cadre);
 export const estLoisir = (c) => Boolean(c && c.libre && !c.cadre);
+// 寝る : on ne la « finit » pas ; le bouton est 「おやすみ」 (il va au lit), et la nuit l'écran dit bonne nuit.
+export const estSommeil = (c) => Boolean(c && c.sommeil);
 
 export function mettreDansLibre(d, idAct, idCarte) {
   modifierJour(d, (liste) => {
