@@ -429,6 +429,8 @@ function editerCarte(c0) {
   sansPhoto.addEventListener('change', () => { c.sansPhoto = sansPhoto.checked; });
   const important = el('input', { type: 'checkbox', checked: Boolean(c.important) });
   important.addEventListener('change', () => { c.important = important.checked; });
+  const libre = el('input', { type: 'checkbox', checked: Boolean(c.libre) });
+  libre.addEventListener('change', () => { c.libre = libre.checked; });
   const fixe = el('input', { type: 'checkbox', checked: finFixe(c) });
   fixe.addEventListener('change', () => { c.finFixe = fixe.checked; });
   // もちもの : une ligne par affaire (émoji + nom).
@@ -479,6 +481,7 @@ function editerCarte(c0) {
     champ(L('Étapes liées', 'つなぐ てじゅん'), routineSel),
     el('label', { class: 'p-case' }, sansPhoto, el('span', { text: L('Ne pas proposer de photo (toilettes, bain…)', '写真を すすめない（トイレ、おふろなど）') })),
     el('label', { class: 'p-case' }, important, el('span', { text: L('Important, à ne pas oublier : mis en avant dans 「こんしゅう」', 'わすれては いけない 予定：「こんしゅう」で 目立たせる') })),
+    el('label', { class: 'p-case' }, libre, el('span', { text: L("Temps libre ou loisir : finir plus tôt n'est pas un problème (« もう おわりに する？ »)", '自由時間・あそび：早めに おわっても よい（「もう おわりに する？」）') })),
     el('label', { class: 'p-case' }, fixe, el('span', { text: L("Heure de fin fixe (cours) : 「おわった」 seulement dans les 5 dernières minutes", 'おわりの 時間が 決まって いる（授業）：おわる 5分前から チェック できる') })),
   );
   const actions = el('div', { class: 'p-ligne' });

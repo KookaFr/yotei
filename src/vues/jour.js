@@ -344,8 +344,9 @@ export function demanderFin(d, it) {
   const disponibles = Object.keys(vars);
   const reaction = composer(tirer(`r-${categorie}`, liste(categorie), disponibles) || 'おつかれさま！', vars);
   const propres = questionsCarte(c);
-  const generale = categorie === 'avance' || categorie === 'tresTot' ? 'verifFort' : 'verifNormal';
-  const modeleQ = (propres.length ? tirer(`q-${c.id}`, propres, disponibles) : null)
+  let generale = categorie === 'avance' || categorie === 'tresTot' ? 'verifFort' : 'verifNormal';
+  if (c.libre) generale = 'verifLibre';
+  const modeleQ = (propres.length && categorie !== 'libreTot' ? tirer(`q-${c.id}`, propres, disponibles) : null)
     || tirer(generale, liste(generale), disponibles) || 'おわった？';
   const question = composer(modeleQ, vars);
 
@@ -353,7 +354,7 @@ export function demanderFin(d, it) {
   contenu.append(el('div', { class: `verif-tete lieu-${c.lieu}`, html: `${visuel(c, 'grand')}<span class="verif-nom">${nomHtml(c)}</span>` }));
   const bloc = el('div', { class: `verif-contexte verif-${categorie}`, 'data-lire': reaction.lire });
   const finHorloge = categorie === 'avance' ? courant.debut : courant.finEff;
-  if (reglages.horloge && dr.aujourdhui && finHorloge !== null && ['avance', 'tresTot', 'tot', 'aLheure'].includes(categorie)) {
+  if (reglages.horloge && dr.aujourdhui && finHorloge !== null && ['avance', 'tresTot', 'tot', 'libreTot', 'aLheure'].includes(categorie)) {
     bloc.insertAdjacentHTML('beforeend', svgHorloge(m, finHorloge, { titre: reaction.lire }));
   } else {
     bloc.insertAdjacentHTML('beforeend', `<i class="verif-emoji" aria-hidden="true">${{ tard: '👍', sansHeure: '🌟' }[categorie] || '⏰'}</i>`);
@@ -365,7 +366,8 @@ export function demanderFin(d, it) {
   actions.append(
     bouton('まだ', () => {
       fermerFeuille();
-      parler(composer(tirer('mada', liste('mada'), disponibles) || 'わかった。', vars).lire);
+      const listeMada = c.libre ? 'madaLibre' : 'mada';
+      parler(composer(tirer(listeMada, liste(listeMada), disponibles) || 'わかった。', vars).lire);
     }, { classe: 'btn btn-large', icone: ICONE_RETOUR }),
     bouton('うん', () => { fermerFeuille(); marquerFait(d, courant); }, { classe: 'btn btn-large btn-fait', icone: ICONE_COCHE }),
   );

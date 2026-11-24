@@ -29,6 +29,8 @@ Elle fait suite à くらべよう (https://kookafr.github.io/kurabe/) et repren
 1. **une réaction au temps mis**, selon la catégorie : pas encore commencée (moins de 15 min avant), très tôt (moins de la moitié du temps), un peu tôt (encore 10 min ou plus), à l'heure, après coup, sans heure de fin. « Tôt » ne vaut que pour une vraie heure de fin ;
 2. **une question de vérification** : une des questions de la carte (「歯を ぜんぶ みがいた？」, 「おくの 歯も みがいた？」, 「うがいを した？」…), sinon une question générale, plus insistante quand c'est fini tôt.
 
+Le temps libre et les loisirs (自由時間, ゲーム, テレビ, 動画, 散歩, 公園…) ont leurs propres messages : s'arrêter avant la fin n'y est pas « trop vite » (「まだ じかんは あるよ。」 → 「もう おわりに する？」 ; 「まだ」 → 「ゆっくり たのしんでね。」).
+
 Chaque catégorie a sa liste de phrases (`src/messages.js`) ; une phrase est tirée au hasard, jamais deux fois de suite la même, et une phrase dont une variable manque est sautée. Variables : {nom} {debut} {fin} {reste} {duree} {retard}. 「うん」 coche, 「まだ」 ferme avec un encouragement tiré lui aussi d'une liste. Les parents modifient toutes les listes et les questions de chaque carte (une par ligne) ; elles voyagent avec la sauvegarde.
 
 **Annonces** (appli ouverte) : un carillon et 「〜の じかんだよ」 au début d'une activité, 「あと 5ふんで おわりだよ」 avant la fin.

@@ -22,6 +22,7 @@ export const CATEGORIES = [
     fr: 'Très tôt : moins de la moitié du temps, et 10 min ou plus restantes', ja: 'とても はやい（半分も たって いない）',
   },
   { id: 'tot', groupe: 'reaction', fr: 'Un peu tôt : encore 10 min ou plus', ja: 'すこし はやい（あと 10分 以上）' },
+  { id: 'libreTot', groupe: 'reaction', fr: 'Temps libre ou loisir arrêté avant la fin (pas un problème)', ja: '自由時間・あそびを 早めに おわる' },
   { id: 'aLheure', groupe: 'reaction', fr: "À l'heure (moins de 10 min avant la fin, jusqu'à 5 min après)", ja: 'ちょうど いい じかん' },
   { id: 'tard', groupe: 'reaction', fr: 'Après coup (plus de 5 min après la fin)', ja: 'おわりの 時間を すぎて から' },
   { id: 'sansHeure', groupe: 'reaction', fr: 'Activité sans heure de fin', ja: 'おわりの 時間が ない 予定' },
@@ -31,7 +32,9 @@ export const CATEGORIES = [
   },
   { id: 'verifFort', groupe: 'question', fr: 'Question générale, quand c\'est fini tôt', ja: 'はやく おわった ときの 質問' },
   { id: 'verifNormal', groupe: 'question', fr: 'Question générale, les autres fois', ja: 'ふつうの 質問' },
+  { id: 'verifLibre', groupe: 'question', fr: 'Question générale, temps libre ou loisir', ja: '自由時間・あそびの 質問' },
   { id: 'mada', groupe: 'mada', fr: 'Réponse à 「まだ」', ja: '「まだ」の あとの ことば' },
+  { id: 'madaLibre', groupe: 'mada', fr: 'Réponse à 「まだ」, temps libre ou loisir', ja: '「まだ」の あと（自由時間・あそび）' },
 ];
 
 export const MESSAGES_DEFAUT = {
@@ -51,6 +54,11 @@ export const MESSAGES_DEFAUT = {
     '{duree}で できたね。 よく がんばった！',
     '時間《じかん》より はやく おわったね。',
     'いい ちょうしだね！ まだ {reste} あるよ。',
+  ],
+  libreTot: [
+    'まだ {reste} あるよ。 ゆっくりで いいよ。',
+    '{fin}まで じかんが あるよ。',
+    'まだ じかんは あるよ。',
   ],
   aLheure: [
     'ちょうど いい 時間《じかん》だね！',
@@ -86,11 +94,19 @@ export const MESSAGES_DEFAUT = {
     '最後《さいご》まで できた？',
     'かたづけも できた？',
   ],
+  verifLibre: [
+    'もう おわりに する？',
+    'おわりで いい？',
+  ],
   mada: [
     'わかった。 おわったら また おしてね。',
     'だいじょうぶ。 ゆっくりで いいよ。',
     '最後《さいご》まで がんばろう！',
     'できたら おしえてね。',
+  ],
+  madaLibre: [
+    'わかった。 ゆっくり たのしんでね。',
+    'うん。 まだ じかんが あるよ。',
   ],
 };
 
@@ -162,6 +178,8 @@ export function categorieTemps(it, m, aujourdhui) {
   // « Tôt » seulement pour une vraie heure de fin : sans elle, l'activité dure jusqu'à la suivante
   // (歯みがき à 21:30 avant 寝る à 22:00 n'est pas « fini 25 minutes trop tôt »).
   if (reste >= 10 && it.fin !== null) {
+    // Temps libre ou loisir : s'arrêter avant la fin n'est pas « trop vite ».
+    if (it.carte && it.carte.libre) return 'libreTot';
     const duree = it.debut !== null ? it.finEff - it.debut : null;
     const ecoule = it.debut !== null ? m - it.debut : null;
     return duree && ecoule !== null && ecoule < duree / 2 ? 'tresTot' : 'tot';

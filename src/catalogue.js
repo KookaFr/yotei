@@ -8,6 +8,7 @@
    - important : à ne pas oublier (mis en avant dans la semaine) ;
    - verif : les questions possibles quand l'élève appuie sur 「おわった」 (une est tirée au hasard ;
      sans question, une question générale : messages.js) ;
+   - libre : temps libre ou loisir (finir plus tôt n'est pas un problème : 「もう おわりに する？」) ;
    - trajet : un trajet (通学, 下校) : on peut arriver en avance, l'heure de fin n'est pas fixe ;
    - finFixe : l'heure de fin est fixe (par défaut : les cartes de l'école, sauf les trajets) ;
    - mochimono : les affaires à emporter ce jour-là [{ emoji, texte }] (semaine, きょう, 明日の 準備).
@@ -69,11 +70,11 @@ export const CARTES = [
   c('oyatsu', 'ie', '🍪', 'おやつ', 'おやつを 食《た》べました。', { verif: ['ごみを すてた？', '手《て》を ふいた？'] }),
   c('shukudai', 'ie', '✏️', '宿題《しゅくだい》', '宿題《しゅくだい》を しました。', { verif: ['宿題《しゅくだい》を お家《うち》の 人《ひと》に 見《み》せた？', '名前《なまえ》を 書《か》いた？', 'かばんに 入《い》れた？'] }),
   c('otetsudai', 'ie', '🍽️', 'お手伝《てつだ》い', 'お手伝《てつだ》いを しました。'),
-  c('jiyu', 'ie', '😊', '自由《じゆう》 時間《じかん》', '好《す》きな ことを しました。'),
-  c('game', 'ie', '🎮', 'ゲーム', 'ゲームを しました。', { verif: ['ゲームを かたづけた？'] }),
-  c('terebi', 'ie', '📺', 'テレビ', 'テレビを 見《み》ました。', { verif: ['テレビを 消《け》した？'] }),
-  c('douga', 'ie', '📱', '動画《どうが》', '動画《どうが》を 見《み》ました。', { verif: ['動画《どうが》を とめた？'] }),
-  c('kiku', 'ie', '🎧', '音楽《おんがく》を 聞《き》く', '音楽《おんがく》を 聞《き》きました。'),
+  c('jiyu', 'ie', '😊', '自由《じゆう》 時間《じかん》', '好《す》きな ことを しました。', { libre: true, verif: ['つかった ものを かたづけた？'] }),
+  c('game', 'ie', '🎮', 'ゲーム', 'ゲームを しました。', { verif: ['ゲームを かたづけた？'], libre: true }),
+  c('terebi', 'ie', '📺', 'テレビ', 'テレビを 見《み》ました。', { verif: ['テレビを 消《け》した？'], libre: true }),
+  c('douga', 'ie', '📱', '動画《どうが》', '動画《どうが》を 見《み》ました。', { verif: ['動画《どうが》を とめた？'], libre: true }),
+  c('kiku', 'ie', '🎧', '音楽《おんがく》を 聞《き》く', '音楽《おんがく》を 聞《き》きました。', { libre: true }),
   c('ofuro', 'ie', '🛁', 'お風呂《ふろ》', 'お風呂《ふろ》に 入《はい》りました。', { sansPhoto: true, verif: ['体《からだ》を ふいた？', 'かみの 毛《け》を かわかした？'] }),
   c('kusuri', 'ie', '💊', '薬《くすり》', '薬《くすり》を 飲《の》みました。', { sansPhoto: true }),
   c('ashita', 'ie', '📋', '明日《あした》の 準備《じゅんび》', '明日《あした》の 準備《じゅんび》を しました。', { routine: 'mochimono' }),
@@ -81,10 +82,10 @@ export const CARTES = [
   c('neru', 'ie', '🛏️', '寝《ね》る', '', { sansPhoto: true, verif: ['ふとんに 入《はい》った？', '電気《でんき》を 消《け》した？'] }),
   // --- Dehors ---
   c('dei', 'soto', '🏡', '放課後《ほうかご》 デイ', '放課後《ほうかご》 デイに 行《い》きました。'),
-  c('sanpo', 'soto', '🚶', '散歩《さんぽ》', '散歩《さんぽ》を しました。'),
+  c('sanpo', 'soto', '🚶', '散歩《さんぽ》', '散歩《さんぽ》を しました。', { libre: true }),
   c('kaimono', 'soto', '🛒', '買《か》い物《もの》', '買《か》い物《もの》に 行《い》きました。'),
-  c('odekake', 'soto', '🚗', 'お出《で》かけ', 'お出《で》かけしました。'),
-  c('kouen', 'soto', '🌳', '公園《こうえん》', '公園《こうえん》に 行《い》きました。'),
+  c('odekake', 'soto', '🚗', 'お出《で》かけ', 'お出《で》かけしました。', { libre: true }),
+  c('kouen', 'soto', '🌳', '公園《こうえん》', '公園《こうえん》に 行《い》きました。', { libre: true }),
   c('densha', 'soto', '🚃', '電車《でんしゃ》', '電車《でんしゃ》に 乗《の》りました。'),
   c('basu', 'soto', '🚌', 'バス', 'バスに 乗《の》りました。'),
   c('puru', 'soto', '🏊', 'プール', 'プールで 泳《およ》ぎました。', { mochimono: [m('🩱', '水着《みずぎ》'), m('🧢', '水泳《すいえい》ぼうし')] }),
@@ -92,7 +93,7 @@ export const CARTES = [
   c('naraigoto', 'soto', '🎹', '習《なら》い事《ごと》', '習《なら》い事《ごと》に 行《い》きました。'),
   c('byoin', 'soto', '🏥', '病院《びょういん》', '病院《びょういん》に 行《い》きました。', { sansPhoto: true, important: true, mochimono: [m('💳', '保険証《ほけんしょう》'), m('📕', 'お薬《くすり》手帳《てちょう》')] }),
   c('gaishoku', 'soto', '🍽️', '外食《がいしょく》', 'お店《みせ》で 食《た》べました。'),
-  c('tomodachi', 'soto', '🤝', '友《とも》だちと 遊《あそ》ぶ', '友《とも》だちと 遊《あそ》びました。'),
+  c('tomodachi', 'soto', '🤝', '友《とも》だちと 遊《あそ》ぶ', '友《とも》だちと 遊《あそ》びました。', { libre: true }),
 ];
 
 /* ----- Les étapes (une à la fois) ----- */

@@ -1010,3 +1010,4 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 
 /* Licence, en bas de l'espace parents */
 .p-mention { margin: 24px auto 8px; text-align: center; font-size: .85em; color: var(--encre-douce); }
+.verif-contexte.verif-libreTot { border-color: var(--bon); }
