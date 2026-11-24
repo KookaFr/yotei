@@ -9,7 +9,7 @@ import { noter } from '../donnees.js';
 import {
   ajouterJours, aujourdhui, cle, JOURS_SEMAINE, yomiDate,
 } from '../heure.js';
-import { deroulement } from '../journee.js';
+import { deroulement, recitDe } from '../journee.js';
 import { el } from '../outils.js';
 import { chargerPhotos, nouvellePhoto, supprimerPhoto, urlPhoto } from '../photos.js';
 import { plateforme } from '../plateforme.js';
@@ -36,7 +36,8 @@ let dateRecit = null;
 export const choisirDateRecit = (d) => { dateRecit = d; };
 
 const faits = (d) => deroulement(d).items.filter((it) => it.fait);
-const phrase = (it) => (it.carte.recit ? lu(it.carte.recit) : `${nomLu(it.carte)}。`);
+// La phrase du soir (avec ce qu'il a fait pendant un 自由時間 : 「自由時間に テレビを 見ました。」).
+const phrase = (it) => (recitDe(it) ? lu(recitDe(it)) : `${nomLu(it.carte)}。`);
 
 export function rendreRecit(conteneur) {
   const d = dateRecit || aujourdhui();
@@ -116,7 +117,7 @@ export function diaporama(d, depart = 0) {
     const carte = el('div', { class: `diapo lieu-${it.carte.lieu}` });
     carte.innerHTML = `<div class="diapo-image">${photo ? `<img data-photo="${photo}" alt="">` : visuel(it.carte, 'enorme')}</div>`
       + `<p class="diapo-heure">${it.debut !== null ? heureHtml(it.debut) : ''}</p>`
-      + `<p class="diapo-phrase" data-lire="${parole}">${html(it.carte.recit || it.carte.nom)}</p>`;
+      + `<p class="diapo-phrase" data-lire="${parole}">${html(recitDe(it) || it.carte.nom)}</p>`;
     const sentiments = el('div', { class: 'humeurs', role: 'group', 'aria-label': 'どうだった？' });
     sentiments.append(el('p', { class: 'humeurs-question', 'data-lire': 'どうだった？', html: html('どうだった？') }));
     HUMEURS.forEach((x) => {
@@ -265,7 +266,7 @@ export async function imageJournee(d) {
     if (heure) cx.fillText(heure, x + 22, y + ih + 44);
     cx.fillStyle = '#1d2427';
     let taille = 40;
-    const nom = brut(it.carte.nom);
+    const nom = `${brut(it.carte.nom)}${it.loisirs && it.loisirs.length ? ` ${it.loisirs.map((l) => l.emoji || '').join('')}` : ''}`;
     cx.font = `700 ${taille}px ${POLICE}`;
     while (cx.measureText(nom).width > tw - 110 && taille > 24) {
       taille -= 2;

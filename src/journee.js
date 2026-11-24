@@ -44,6 +44,7 @@ export function deroulement(d, maintenant = minutesMaintenant()) {
     const note = notes[act.id] || null;
     return {
       act, carte: carte(act.carte), debut: versMinutes(act.debut), fin: versMinutes(act.fin), note, fait: Boolean(note && note.fait), index: i,
+      loisirs: (act.loisirs || []).map((id) => carte(id)),
     };
   });
   // Fin effective d'une activité à heure : sa fin ; sinon le début de la suivante qui a une heure.
@@ -171,4 +172,16 @@ export function mochimonoDu(d, items = deroulement(d).items) {
     res.push({ ...a, carte: it.carte, debut: it.debut, fini: Boolean(it.passe || it.fait) });
   }));
   return res;
+}
+
+/* ----- Ce qu'on fait pendant un temps libre ----- */
+
+// 「テレビ、 ゲーム」 (lu).
+export const loisirsLus = (it) => it.loisirs.map((c) => lu(c.nom)).join('、 ');
+// La phrase du soir : 「自由時間に テレビを 見ました。 ゲームを しました。」
+export function recitDe(it) {
+  const c = it.carte;
+  if (!it.loisirs || !it.loisirs.length) return c.recit || '';
+  const phrases = it.loisirs.map((l) => l.recit || `${l.nom}を しました。`);
+  return `${c.nom}に ${phrases.join(' ')}`;
 }

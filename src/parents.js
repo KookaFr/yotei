@@ -137,6 +137,20 @@ function editeurListe() {
       btnP('✕', () => { liste.splice(i, 1); remplacerListe(liste); rendreParentsOuFeuille(); }, 'btn btn-mini btn-danger'));
     ligne.append(el('div', { class: 'ed-heures' }, debut, el('span', { text: '–' }), fin), bCarte, outils);
     if (act.parEleve) ligne.append(el('small', { class: 'ed-eleve', text: L('ajoutée par l\'enfant', '子どもが 入れた') }));
+    // Ce que l'enfant a mis dans un 自由時間 (✕ pour l'enlever).
+    if (act.loisirs && act.loisirs.length) {
+      const boiteL = el('div', { class: 'ed-loisirs' }, el('small', { text: L('Dedans (choisi par l\'enfant) :', '中で する こと（子どもが えらんだ）：') }));
+      act.loisirs.forEach((id) => {
+        const l = carte(id);
+        boiteL.append(btnP(`${l.emoji || '⭐'} ${lu(l.nom)} ✕`, () => {
+          act.loisirs = act.loisirs.filter((x) => x !== id);
+          if (!act.loisirs.length) delete act.loisirs;
+          remplacerListe(liste);
+          rendreParentsOuFeuille();
+        }, 'btn btn-mini'));
+      });
+      ligne.append(boiteL);
+    }
     boite.append(ligne);
   });
   boite.append(btnP(L('＋ Ajouter une activité', '＋ 予定を たす'), () => choisirCarte({
@@ -431,6 +445,8 @@ function editerCarte(c0) {
   important.addEventListener('change', () => { c.important = important.checked; });
   const libre = el('input', { type: 'checkbox', checked: Boolean(c.libre) });
   libre.addEventListener('change', () => { c.libre = libre.checked; });
+  const cadre = el('input', { type: 'checkbox', checked: Boolean(c.cadre) });
+  cadre.addEventListener('change', () => { c.cadre = cadre.checked; if (cadre.checked) { c.libre = true; libre.checked = true; } });
   const fixe = el('input', { type: 'checkbox', checked: finFixe(c) });
   fixe.addEventListener('change', () => { c.finFixe = fixe.checked; });
   // もちもの : une ligne par affaire (émoji + nom).
@@ -482,6 +498,8 @@ function editerCarte(c0) {
     el('label', { class: 'p-case' }, sansPhoto, el('span', { text: L('Ne pas proposer de photo (toilettes, bain…)', '写真を すすめない（トイレ、おふろなど）') })),
     el('label', { class: 'p-case' }, important, el('span', { text: L('Important, à ne pas oublier : mis en avant dans 「こんしゅう」', 'わすれては いけない 予定：「こんしゅう」で 目立たせる') })),
     el('label', { class: 'p-case' }, libre, el('span', { text: L("Temps libre ou loisir : finir plus tôt n'est pas un problème (« もう おわりに する？ »)", '自由時間・あそび：早めに おわっても よい（「もう おわりに する？」）') })),
+    el('label', { class: 'p-case' }, cadre, el('span', { text: L('Créneau de temps libre (自由時間) : l\'enfant y range ses loisirs (テレビ, ゲーム…) au lieu de les mettre avant ou après',
+      '自由時間の わく：子どもが あそび（テレビ、ゲームなど）を この 中に 入れる') })),
     el('label', { class: 'p-case' }, fixe, el('span', { text: L("Heure de fin fixe (cours) : 「おわった」 seulement dans les 5 dernières minutes", 'おわりの 時間が 決まって いる（授業）：おわる 5分前から チェック できる') })),
   );
   const actions = el('div', { class: 'p-ligne' });

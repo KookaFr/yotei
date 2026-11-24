@@ -6,15 +6,15 @@
 
 import { choisirCarte } from '../choix-carte.js';
 import {
-  carte, evenementsDu, modifierJour, noter, nouvelleActivite, oublier, prochainsEvenements, trierParHeure,
-  routine, sorteDuJour,
+  carte, changerLoisirs, estCadreLibre, estLoisir, evenementsDu, mettreDansLibre, modifierJour, noter, nouvelleActivite, oublier,
+  prochainsEvenements, routine, sorteDuJour, toutesLesCartes, trierParHeure,
 } from '../donnees.js';
 import {
   ajouterJours, aujourdhui, cle, deCle, ecartJours, JOURS_SEMAINE, texteDans, texteDuree, versTexte, yomiDans, yomiDate, yomiDuree,
 } from '../heure.js';
 import { barre, repereGrandeAiguille, svgHorloge } from '../horloge.js';
 import {
-  AVANT_FIN as AVANT_FIN_COURS, coursEnCours, deroulement, mochimonoDu, PERIODES,
+  AVANT_FIN as AVANT_FIN_COURS, coursEnCours, deroulement, loisirsLus, mochimonoDu, PERIODES,
 } from '../journee.js';
 import {
   categorieTemps, composer, liste, questionsCarte, tirer, varDuree,
@@ -50,6 +50,10 @@ const peutDeplacer = () => reglages.eleve === 'deplacer';
 export const dateHtml = (d) => `<span class="mot">${d.getMonth() + 1}がつ</span> <span class="mot">${d.getDate()}にち</span>`
   + `<span class="mot jour-sem jour-${d.getDay()}">（${html(JOURS_SEMAINE[d.getDay()].court, { mots: false })}）</span>`;
 
+// Ce qu'il a choisi de faire pendant un 自由時間 : 「📺 テレビ 🎮 ゲーム」.
+const loisirsHtml = (it, classe = 'loisirs') => (it.loisirs && it.loisirs.length
+  ? `<span class="${classe}">${it.loisirs.map((l) => `<span class="loisir"><i aria-hidden="true">${l.emoji || '⭐'}</i>${nomHtml(l)}</span>`).join('')}</span>` : '');
+
 /* ----- La carte 「いま」 ----- */
 
 function carteMaintenant(d, dr) {
@@ -71,17 +75,19 @@ function carteMaintenant(d, dr) {
   }
   const c = actuel.carte;
   art.classList.add(`lieu-${c.lieu}`);
+  art.dataset.act = actuel.act.id;
   const fin = commence ? actuel.finEff : actuel.debutEff;
   const debutPart = commence ? (actuel.debutEff ?? maintenant) : maintenant;
   const reste = fin !== null ? Math.max(0, Math.ceil(fin - maintenant)) : null;
   const etiquette = commence ? 'いま' : 'つぎ';
   const plage = plageHtml(actuel.act);
   let parole = `${etiquette}は ${nomLu(c)}。`;
+  if (actuel.loisirs.length) parole += ` ${loisirsLus(actuel)}。`;
   if (plage) parole += ` ${plageLue(actuel.act)}。`;
 
   const haut = el('div', { class: 'm-haut' });
   haut.innerHTML = `${visuel(c, 'grand')}<div class="m-titre"><p class="m-etiquette">${etiquette}</p>`
-    + `<h2 class="m-nom">${nomHtml(c)}</h2>${plage ? `<p class="m-heures">${plage}</p>` : ''}</div>`;
+    + `<h2 class="m-nom">${nomHtml(c)}</h2>${loisirsHtml(actuel, 'loisirs m-loisirs')}${plage ? `<p class="m-heures">${plage}</p>` : ''}</div>`;
   art.append(haut);
 
   const temps = el('div', { class: 'm-temps' });
@@ -135,9 +141,11 @@ function carteSuivante(dr) {
   const c = s.carte;
   const plage = s.debut !== null ? heureHtml(s.debut) : '';
   const p = el('div', {
-    class: `suivante lieu-${c.lieu}`,
-    'data-lire': `つぎは ${nomLu(c)}。${s.debut !== null ? ` ${heureLue(s.debut)}から。` : ''}`,
-    html: `<span class="s-etiquette">つぎ</span>${visuel(c)}<span class="s-nom">${nomHtml(c)}</span>${plage ? `<span class="s-heure">${plage}</span>` : ''}`,
+    class: `suivante lieu-${c.lieu}`, 'data-act': s.act.id,
+    'data-lire': `つぎは ${nomLu(c)}。${s.loisirs.length ? ` ${loisirsLus(s)}。` : ''}${s.debut !== null ? ` ${heureLue(s.debut)}から。` : ''}`,
+    html: `<span class="s-etiquette">つぎ</span>${visuel(c)}<span class="s-nom">${nomHtml(c)}`
+      + `${s.loisirs.length ? `<span class="s-loisirs" aria-hidden="true">${s.loisirs.map((l) => l.emoji || '⭐').join('')}</span>` : ''}</span>`
+      + `${plage ? `<span class="s-heure">${plage}</span>` : ''}`,
   });
   return p;
 }
@@ -198,9 +206,9 @@ function ligneActivite(d, it, { inerte = false } = {}) {
   const etat = { fait: 'おわった', maintenant: 'いま', passe: '', avenir: '' }[it.statut];
   const b = el('button', {
     type: 'button', class: 'act-btn',
-    'aria-label': `${it.debut !== null ? `${heureLue(it.debut)}、 ` : ''}${nomLu(c)}${etat ? `、 ${etat}` : ''}`,
+    'aria-label': `${it.debut !== null ? `${heureLue(it.debut)}、 ` : ''}${nomLu(c)}${it.loisirs.length ? `（${loisirsLus(it)}）` : ''}${etat ? `、 ${etat}` : ''}`,
     html: `<span class="act-heure">${it.debut !== null ? heureHtml(it.debut) : ''}</span>${visuel(c)}`
-      + `<span class="act-nom">${nomHtml(c)}</span>`
+      + `<span class="act-nom">${nomHtml(c)}${loisirsHtml(it, 'loisirs act-loisirs')}</span>`
       + `<span class="act-etat" aria-hidden="true">${it.fait ? ICONE_COCHE : ''}${it.note && it.note.photo ? '<i class="act-photo">📷</i>' : ''}`
       + `${!it.fait && c.mochimono && c.mochimono.length ? '<i class="act-photo">🎒</i>' : ''}</span>`,
   });
@@ -361,15 +369,18 @@ export function demanderFin(d, it) {
   if (dr.aujourdhui && courant.finEff !== null && m - courant.finEff >= 1) vars.retard = varDuree(Math.floor(m - courant.finEff));
   const disponibles = Object.keys(vars);
   const reaction = composer(tirer(`r-${categorie}`, liste(categorie), disponibles) || 'おつかれさま！', vars);
-  const propres = questionsCarte(c);
+  // Un 自由時間 avec des loisirs : les questions de ces loisirs (「テレビを 消した？」…), sinon les siennes.
+  const desLoisirs = courant.loisirs.flatMap((l) => questionsCarte(l));
+  const propres = desLoisirs.length ? desLoisirs : questionsCarte(c);
+  const cleQ = desLoisirs.length ? `q-${c.id}-${courant.loisirs.map((l) => l.id).join('-')}` : `q-${c.id}`;
   let generale = categorie === 'avance' || categorie === 'tresTot' ? 'verifFort' : 'verifNormal';
   if (c.libre) generale = 'verifLibre';
-  const modeleQ = (propres.length && categorie !== 'libreTot' ? tirer(`q-${c.id}`, propres, disponibles) : null)
+  const modeleQ = (propres.length && categorie !== 'libreTot' ? tirer(cleQ, propres, disponibles) : null)
     || tirer(generale, liste(generale), disponibles) || 'おわった？';
   const question = composer(modeleQ, vars);
 
   const contenu = el('div', { class: 'verif' });
-  contenu.append(el('div', { class: `verif-tete lieu-${c.lieu}`, html: `${visuel(c, 'grand')}<span class="verif-nom">${nomHtml(c)}</span>` }));
+  contenu.append(el('div', { class: `verif-tete lieu-${c.lieu}`, html: `${visuel(c, 'grand')}<span class="verif-nom">${nomHtml(c)}${loisirsHtml(courant, 'loisirs verif-loisirs')}</span>` }));
   const bloc = el('div', { class: `verif-contexte verif-${categorie}`, 'data-lire': reaction.lire });
   const finHorloge = categorie === 'avance' ? courant.debutEff : courant.finEff;
   if (reglages.horloge && dr.aujourdhui && finHorloge !== null && ['avance', 'tresTot', 'tot', 'libreTot', 'aLheure'].includes(categorie)) {
@@ -499,6 +510,7 @@ function ouvrirActivite(d, it) {
     contenu.append(el('div', { class: 'detail-photo avec-photo', html: `<img data-photo="${courant.note.photo}" alt="">` }));
   }
   if (c.mochimono && c.mochimono.length) contenu.append(boiteMochimono('もちもの', c.mochimono.map((a) => ({ ...a, carte: c }))));
+  if (estCadreLibre(c) && (!dr.passe || courant.loisirs.length)) contenu.append(blocLoisirs(d, courant, !dr.passe && !courant.fait && peutAjouter()));
   const actions = el('div', { class: 'actions-feuille' });
   actions.append(bouton('きく', () => lireElement(tete), { classe: 'btn', icone: ICONE_HP, options: { garde: false } }));
   if (!dr.passe || courant.fait) {
@@ -532,6 +544,67 @@ function ouvrirActivite(d, it) {
   lireElement(tete);
 }
 
+/* ----- 自由時間 : ce qu'il choisit d'y faire ----- */
+
+function blocLoisirs(d, it, modifiable) {
+  const bloc = el('div', { class: 'bloc-loisirs' });
+  const titre = 'なにを する？';
+  bloc.append(el('p', { class: 'bl-titre', 'data-lire': titre, html: html(titre) }));
+  if (it.loisirs.length) {
+    const ul = el('ul', { class: 'bl-liste' });
+    it.loisirs.forEach((l) => {
+      const li = el('li', { class: `bl-loisir lieu-${l.lieu}`, 'data-lire': nomLu(l), html: `${visuel(l)}<span>${nomHtml(l)}</span>` });
+      if (modifiable) {
+        const x = el('button', { type: 'button', class: 'btn-rond btn-mini-rond', 'aria-label': `${nomLu(l)}を はずす`, html: ICONE_FERMER });
+        activable(x, () => {
+          changerLoisirs(d, it.act.id, it.loisirs.filter((y) => y.id !== l.id).map((y) => y.id));
+          parler(`${nomLu(l)}を はずしたよ。`);
+          fermerFeuille();
+          nav.rafraichir();
+        }, { garde: false });
+        li.append(x);
+      }
+      ul.append(li);
+    });
+    bloc.append(ul);
+  } else {
+    bloc.append(el('p', { class: 'bl-vide', 'data-lire': 'すきな ことを えらんでね。', html: html('好《す》きな ことを えらんでね。') }));
+  }
+  if (modifiable) bloc.append(bouton('えらぶ', () => choisirLoisirs(d, it), { classe: 'btn', icone: ICONE_PLUS }));
+  return bloc;
+}
+
+// Une grille des loisirs : il touche ce qu'il veut faire (plusieurs possibles), puis 「これで いい」.
+function choisirLoisirs(d, it) {
+  const choisis = new Set(it.loisirs.map((l) => l.id));
+  const contenu = el('div', { class: 'choix-carte choix-loisirs' });
+  const grille = el('div', { class: 'choix-grille' });
+  toutesLesCartes().filter(estLoisir).forEach((l) => {
+    const b = el('button', {
+      type: 'button', class: `tuile-carte lieu-${l.lieu}${choisis.has(l.id) ? ' choisie' : ''}`, 'aria-pressed': String(choisis.has(l.id)),
+      'aria-label': lu(l.nom), 'data-lire': lu(l.nom), html: `${visuel(l)}<span class="tuile-nom">${html(l.nom)}</span>`,
+    });
+    activable(b, () => {
+      if (choisis.has(l.id)) choisis.delete(l.id); else choisis.add(l.id);
+      b.classList.toggle('choisie', choisis.has(l.id));
+      b.setAttribute('aria-pressed', String(choisis.has(l.id)));
+      parler(choisis.has(l.id) ? lu(l.nom) : `${lu(l.nom)}は やめる`);
+    }, { garde: false });
+    grille.append(b);
+  });
+  const ok = bouton('これで いい', () => {
+    changerLoisirs(d, it.act.id, [...choisis]);
+    sons.succes();
+    fermerFeuille();
+    fermerFeuille();
+    nav.rafraichir();
+    montrerActivite(it.act.id, { briller: true });
+    parler(choisis.size ? `${[...choisis].map((id) => nomLu(carte(id))).join('と ')}を するんだね。` : 'わかった。');
+  }, { classe: 'btn btn-principal btn-large', icone: ICONE_COCHE });
+  contenu.append(grille, el('div', { class: 'choix-pied' }, ok));
+  ouvrirFeuille({ titre: `${it.carte.nom}に なにを する？`, contenu, classe: 'feuille-haute' });
+}
+
 function oublierFait(d, it) {
   const photo = it.note && it.note.photo;
   if (photo) noter(d, it.act.id, { fait: false });
@@ -545,9 +618,18 @@ function ajouter(d) {
   // D'abord quoi (la carte), puis quand et où (「いつ する？」).
   choisirCarte({
     titre: '何《なに》を 入《い》れる？', texteOk: 'つぎ',
-    surChoix: (idCarte) => choisirPlace(d, idCarte, ({ date, apres, avant, debut, texte }) => {
-      inserer(date, idCarte, { apres, avant, debut });
+    surChoix: (idCarte) => choisirPlace(d, idCarte, ({ date, apres, avant, debut, dans, texte }) => {
       sons.succes();
+      if (dans) {
+        // Un loisir rangé dans un 自由時間 : il n'a pas d'heure à lui.
+        mettreDansLibre(date, dans, idCarte);
+        parler(`${nomLu(carte(idCarte))}を ${lu(texte)}に いれたよ。`);
+        if (cle(date) !== cle(d)) message(`${texte}に 入《い》れたよ。`);
+        nav.rafraichir();
+        if (cle(date) === cle(d)) montrerActivite(dans, { briller: true });
+        return;
+      }
+      inserer(date, idCarte, { apres, avant, debut });
       parler(`${nomLu(carte(idCarte))}を ${lu(texte)}の よていに いれたよ。`);
       if (cle(date) !== cle(d)) message(`${texte}の 予定《よてい》に 入《い》れたよ。`);
       nav.rafraichir();
@@ -593,7 +675,7 @@ function arreterDeplacement() {
 // Faire voir une activité de la liste (au milieu de l'écran), et la faire briller un instant après un déplacement.
 function montrerActivite(id, { briller = false } = {}) {
   if (!id) return;
-  const li = document.querySelector(`.page-jour li[data-act="${id}"]`);
+  const li = document.querySelector(`.page-jour [data-act="${id}"]`);
   if (!li) return;
   try { li.scrollIntoView({ block: 'center', behavior: reglages.animationsReduites ? 'auto' : 'smooth' }); } catch { li.scrollIntoView(); }
   if (briller) li.classList.add('vient-de-bouger');
@@ -604,6 +686,7 @@ function listeDeplacement(d, dr) {
   const items = dr.items.filter((it) => it.statut === 'maintenant' || it.statut === 'avenir' || it.act.id === aDeplacer.id);
   const iMoi = items.findIndex((it) => it.act.id === aDeplacer.id);
   const moi = items[iMoi];
+  const loisir = estLoisir(moi.carte);
   const bloc = el('div', { class: 'moments liste-deplacement' });
   const caseIci = (cible, lire) => {
     const li = el('li', { class: 'place-case' });
@@ -630,6 +713,16 @@ function listeDeplacement(d, dr) {
       li.querySelector('.act-etat').innerHTML = `<i class="act-ici">${ICONE_DEPLACER}</i>`;
     }
     ol.append(li);
+    // Un loisir peut aussi entrer dans un 自由時間.
+    if (loisir && k !== iMoi && estCadreLibre(it.carte) && !it.loisirs.some((l) => l.id === moi.carte.id)) {
+      const lire = `${nomLu(it.carte)}に いれる`;
+      const b = el('button', {
+        type: 'button', class: `place place-dedans lieu-${it.carte.lieu}`, 'aria-label': lire,
+        html: `<span aria-hidden="true">${moi.carte.emoji || '⭐'}</span>${html(`${it.carte.nom}に 入《い》れる`)}`,
+      });
+      activable(b, () => deplacerDans(d, moi, it), { garde: false });
+      ol.append(el('li', { class: 'place-case place-case-dedans' }, b));
+    }
   });
   if (iMoi !== items.length - 1 && ol) ol.append(caseIci({ fin: true }, 'さいご'));
   return bloc;
@@ -652,6 +745,21 @@ function deplacerVers(d, it, cible) {
   parler(`${nomLu(it.carte)}を うごかしたよ。`);
   nav.rafraichir();
   montrerActivite(it.act.id, { briller: true });
+}
+
+// Ranger un loisir (テレビ ajoutée à côté) dans un 自由時間 : il quitte la liste et entre dans le créneau.
+function deplacerDans(d, it, cadre) {
+  modifierJour(d, (liste) => {
+    const i = liste.findIndex((x) => x.id === it.act.id);
+    if (i >= 0) liste.splice(i, 1);
+    const a = liste.find((x) => x.id === cadre.act.id);
+    if (a) a.loisirs = [...new Set([...(a.loisirs || []), it.carte.id])];
+  });
+  aDeplacer = null;
+  sons.succes();
+  parler(`${nomLu(it.carte)}を ${nomLu(cadre.carte)}に いれたよ。`);
+  nav.rafraichir();
+  montrerActivite(cadre.act.id, { briller: true });
 }
 
 function enlever(d, it) {

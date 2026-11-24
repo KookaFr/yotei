@@ -144,6 +144,28 @@ export function trierParHeure(liste) {
   return blocs.flat();
 }
 
+/* ----- Le temps libre et ce qu'on y fait -----
+   Un « créneau » (自由時間) peut contenir des loisirs choisis par l'enfant (テレビ, ゲーム…) :
+   act.loisirs = ['terebi', 'game']. Ils n'ont pas d'heure à eux : ils se font pendant le créneau. */
+export const estCadreLibre = (c) => Boolean(c && c.cadre);
+export const estLoisir = (c) => Boolean(c && c.libre && !c.cadre);
+
+export function mettreDansLibre(d, idAct, idCarte) {
+  modifierJour(d, (liste) => {
+    const a = liste.find((x) => x.id === idAct);
+    if (!a) return;
+    a.loisirs = [...new Set([...(a.loisirs || []), idCarte])];
+  });
+}
+export function changerLoisirs(d, idAct, loisirs) {
+  modifierJour(d, (liste) => {
+    const a = liste.find((x) => x.id === idAct);
+    if (!a) return;
+    if (loisirs.length) a.loisirs = [...new Set(loisirs)];
+    else delete a.loisirs;
+  });
+}
+
 export const nouvelleActivite = (idCarte, debut = '', fin = '', parEleve = false) => ({
   id: uid('a'), carte: idCarte, debut, fin, ...(parEleve ? { parEleve: true } : {}),
 });

@@ -102,19 +102,35 @@ function modulesManquants() {
           await ajout.click();
           await page.waitForTimeout(200);
           await verifier('いれる');
-          // Ajouter テレビ à la fin du soir, puis la déplacer dans la liste (mode 「うごかす」).
+          // Ranger テレビ dans un 自由時間 (si ce jour-là en a encore un).
           await page.locator('.tuile-carte', { hasText: 'テレビ' }).click();
           await page.locator('.choix-pied .btn').click();
           await page.waitForTimeout(150);
+          const libre = page.locator('.place-libre:not([disabled])');
+          if (await libre.count()) {
+            await libre.first().click();
+            await verifier('いれる 自由時間');
+            await page.locator('.placer .choix-pied .btn').click();
+            await page.waitForTimeout(250);
+            if (!(await page.locator('.page-jour .loisir').count())) problemes.push(`${nom} ${moment} : テレビ absente du 自由時間`);
+          } else await page.keyboard.press('Escape');
+          // Ajouter ゲーム à la fin du soir (「べつの じかん」), puis la déplacer dans la liste (mode 「うごかす」).
+          await ajout.click();
+          await page.waitForTimeout(200);
+          await page.locator('.tuile-carte', { hasText: 'ゲーム' }).click();
+          await page.locator('.choix-pied .btn').click();
+          await page.waitForTimeout(150);
+          const autre = page.locator('.placer-autre');
+          if (await autre.count()) await autre.click();
           const yoru = page.locator('.placer .chip', { hasText: 'よる' });
           if (await yoru.count()) await yoru.click();
           await page.locator('.placer .place').last().click();
           await page.locator('.placer .choix-pied .btn').click();
           await page.waitForTimeout(250);
-          const tele = page.locator('.liste-jour .act-btn', { hasText: 'テレビ' });
-          // En journée, テレビ (le soir) est dans la liste à venir ; la nuit, elle est déjà passée.
+          const tele = page.locator('.liste-jour .act-btn', { hasText: 'ゲーム' });
+          // En journée, ゲーム (le soir) est dans la liste à venir ; la nuit, elle est déjà passée.
           const journee = moment.includes('T10:') || moment.includes('T16:');
-          if (journee && !(await tele.count())) problemes.push(`${nom} ${moment} : テレビ absente de la liste`);
+          if (journee && !(await tele.count())) problemes.push(`${nom} ${moment} : ゲーム absente de la liste`);
           if (await tele.count()) {
             await tele.first().click();
             await page.waitForTimeout(200);
@@ -122,6 +138,7 @@ function modulesManquants() {
             await page.waitForTimeout(300);
             await verifier('うごかす');
             if (!(await page.locator('.bandeau-deplacer').count())) problemes.push(`${nom} ${moment} : pas de mode うごかす`);
+            if (journee && !(await page.locator('.place-dedans').count())) problemes.push(`${nom} ${moment} : pas de case 「自由時間に 入れる」`);
             const cases = page.locator('.liste-deplacement .place');
             if (await cases.count()) {
               await cases.first().click();

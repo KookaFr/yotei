@@ -1032,7 +1032,9 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .en-deplacement .act-btn { border: 4px dashed var(--action); border-left: 10px solid var(--lieu); background: var(--lieu-fond); }
 .act-ici { display: flex; color: var(--action); }
 .act-ici svg { width: 28px; height: 28px; }
-.page-jour li[data-act] { scroll-margin: 140px 0 90px; }
+.page-jour [data-act] { scroll-margin: 140px 0 90px; }
+.page-jour .maintenant[data-act] { scroll-margin: 70px 0 90px; }
+.maintenant.vient-de-bouger, .suivante.vient-de-bouger { animation: briller 1.6s ease-out 1; }
 .vient-de-bouger .act-btn { animation: briller 1.6s ease-out 1; }
 @keyframes briller {
   0%, 35% { box-shadow: 0 0 0 6px var(--action); }
@@ -1041,3 +1043,44 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 @media (prefers-reduced-motion: reduce) { .vient-de-bouger .act-btn { animation: none; outline: 4px solid var(--action); } }
 [data-motion="reduce"] .vient-de-bouger .act-btn { animation: none; outline: 4px solid var(--action); }
 .detail-environ { margin-right: .35em; font-size: .8em; color: var(--encre-douce); }
+
+/* 自由時間 : ce qu'il choisit d'y faire (テレビ, ゲーム…) */
+.loisirs { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.loisir { display: inline-flex; align-items: center; gap: 3px; font-weight: 700; }
+.loisir i { font-style: normal; font-family: var(--emoji); }
+.act-loisirs { margin-top: 2px; font-size: .85em; color: var(--encre-douce); }
+.m-loisirs { margin-top: 4px; font-size: 1.05em; }
+.m-loisirs .loisir { padding: 2px 10px; border-radius: 999px; background: var(--surface); border: 2px solid var(--lieu); }
+.s-loisirs { margin-left: 6px; font-family: var(--emoji); font-weight: 400; }
+.verif-loisirs { margin-top: 4px; font-size: .62em; }
+.bloc-loisirs { display: flex; flex-direction: column; gap: 8px; padding: 10px 14px; border: 3px solid var(--ie); border-radius: 18px; background: var(--surface); }
+.bl-titre { margin: 0; font-size: 1.15em; font-weight: 700; }
+.bl-vide { margin: 0; color: var(--encre-douce); font-weight: 700; }
+.bl-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.bl-loisir { display: flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; border: 2px solid var(--lieu); border-radius: 14px; background: var(--lieu-fond); font-weight: 700; }
+.bl-loisir .visuel { font-size: 1.4em; }
+.bloc-loisirs > .btn { align-self: flex-start; }
+.btn-mini-rond { width: 36px; height: 36px; min-width: 36px; min-height: 36px; }
+.btn-mini-rond svg { width: 18px; height: 18px; }
+.places-libres { display: flex; flex-direction: column; gap: 8px; }
+.place-libre {
+  display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 10px;
+  width: 100%; min-height: 60px; padding: 6px 12px; text-align: left;
+  border: 3px dashed var(--lieu); border-left-width: 10px; border-left-style: solid; border-radius: 14px;
+  background: var(--surface); color: var(--encre); font-weight: 700;
+}
+.place-libre .visuel { font-size: 1.6em; }
+.pl-texte { display: flex; flex-direction: column; min-width: 0; }
+.pl-nom { font-size: 1.1em; }
+.pl-heure { color: var(--encre-douce); font-size: .9em; }
+.pl-loisirs { font-family: var(--emoji); font-size: 1.3em; font-weight: 400; }
+.place-libre svg { width: 28px; height: 28px; color: var(--action); }
+.place-libre.choisie { border-style: solid; background: var(--lieu-fond); box-shadow: 0 0 0 3px var(--action); }
+.place-libre:disabled { opacity: .6; }
+.pl-deja { grid-column: 2 / -1; color: var(--encre-douce); }
+.placer-autre { align-self: flex-start; }
+.placer-autre i { font-style: normal; font-family: var(--emoji); }
+.place-dedans { border-color: var(--lieu); color: var(--encre); background: var(--lieu-fond); border-style: dashed; }
+.place-dedans > span[aria-hidden] { font-family: var(--emoji); }
+.place-case-dedans { margin: -2px 0 2px 24px; }
+.ed-loisirs { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
