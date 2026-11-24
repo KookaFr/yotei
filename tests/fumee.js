@@ -35,7 +35,22 @@ const controler = (page) => page.evaluate(() => {
   return { horizontal, coupes };
 });
 
+// Chaque module de src/ doit être dans la liste du service worker (sinon l'appli ne marche pas hors ligne).
+const fs = require('fs');
+function modulesManquants() {
+  const racine = path.join(__dirname, '..');
+  const sw = fs.readFileSync(path.join(racine, 'sw.js'), 'utf8');
+  const lister = (d) => fs.readdirSync(path.join(racine, d), { withFileTypes: true })
+    .flatMap((e) => (e.isDirectory() ? lister(`${d}/${e.name}`) : (e.name.endsWith('.js') ? [`${d}/${e.name}`] : [])));
+  return lister('src').filter((f) => !sw.includes(`'./${f}'`));
+}
+
 (async () => {
+  const manquants = modulesManquants();
+  if (manquants.length) {
+    console.log(`Absents de sw.js : ${manquants.join(', ')}`);
+    process.exit(1);
+  }
   const proc = await serveur();
   const navigateur = await chromium.launch();
   const problemes = [];
