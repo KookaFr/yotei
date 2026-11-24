@@ -21,7 +21,7 @@ Elle fait suite à くらべよう (https://kookafr.github.io/kurabe/) et repren
 
 **Couleurs par lieu** : école en bleu, maison en orange, dehors en vert, partout (liste, semaine, image partagée).
 
-**「おわった」 vérifie avant de cocher** : une activité qui commence dans plus de 15 minutes ne peut pas être cochée (pas de bouton ; la nuit, 「いまは よる。 ゆっくり やすもう。」). Sinon, une fenêtre montre deux choses :
+**「おわった」 vérifie avant de cocher** : une activité qui commence dans plus de 15 minutes ne peut pas être cochée (pas de bouton ; la nuit, 「いまは よる。 ゆっくり やすもう。」). Un cours à l'école (carte 「がっこう」 avec une heure de fin, sauf les trajets 通学 et 下校) ne peut être coché que dans les 5 dernières minutes : la carte dit 「おわりの じかんに なったら チェック できるよ。」 (réglable carte par carte : « heure de fin fixe »). Sinon, une fenêtre montre deux choses :
 1. **une réaction au temps mis**, selon la catégorie : pas encore commencée (moins de 15 min avant), très tôt (moins de la moitié du temps), un peu tôt (encore 10 min ou plus), à l'heure, après coup, sans heure de fin. « Tôt » ne vaut que pour une vraie heure de fin ;
 2. **une question de vérification** : une des questions de la carte (「歯を ぜんぶ みがいた？」, 「おくの 歯も みがいた？」, 「うがいを した？」…), sinon une question générale, plus insistante quand c'est fini tôt.
 

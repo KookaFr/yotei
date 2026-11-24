@@ -928,3 +928,5 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .verif-contexte.verif-tot { border-color: #d99a00; }
 .verif-emoji { font-style: normal; font-family: var(--emoji); font-size: 2.6em; line-height: 1; }
 .p-texte { width: 100%; min-height: 4.5em; padding: 8px 10px; border: 2px solid var(--bord); border-radius: 12px; background: var(--papier); line-height: 1.5; resize: vertical; }
+.m-cours { border-color: var(--gakko); }
+.detail-info { margin-top: 10px; padding: 8px 12px; border-radius: 12px; border: 2px dashed var(--bord); font-weight: 700; }

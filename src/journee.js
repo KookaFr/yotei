@@ -23,6 +23,12 @@ export const PERIODES = [
 ];
 export const DEBUT_JOUR = 6 * 60;
 export const FIN_JOUR = 22 * 60;
+// Les cours ont une heure de fin fixe : on ne les coche pas avant (cartes de l'école, sauf les trajets).
+export const finFixe = (c) => (c.finFixe ?? (c.lieu === 'gakko' && !c.trajet));
+export const AVANT_FIN = 5;
+// Minutes avant la fin d'un cours (0 si on peut cocher).
+export const coursEnCours = (dr, it) => (dr.aujourdhui && finFixe(it.carte) && it.fin !== null && !it.passe && !it.fait
+  && it.fin - dr.maintenant > AVANT_FIN ? Math.ceil(it.fin - dr.maintenant) : 0);
 export const periodeDe = (min) => PERIODES.find((p) => min < p.fin) || PERIODES[PERIODES.length - 1];
 export const indexPeriode = (id) => PERIODES.findIndex((p) => p.id === id);
 

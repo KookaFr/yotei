@@ -14,7 +14,7 @@ import {
 } from '../heure.js';
 import { barre, repereGrandeAiguille, svgHorloge } from '../horloge.js';
 import {
-  deroulement, indexPeriode, mochimonoDu, PERIODES,
+  AVANT_FIN as AVANT_FIN_COURS, coursEnCours, deroulement, indexPeriode, mochimonoDu, PERIODES,
 } from '../journee.js';
 import {
   categorieTemps, composer, liste, questionsCarte, tirer, varDuree,
@@ -106,6 +106,13 @@ function carteMaintenant(d, dr) {
     const nuit = estNuit(maintenant);
     const texte = nuit ? '今《いま》は 夜《よる》。 ゆっくり 休《やす》もう。' : 'まだ はじまって いないよ。';
     art.append(el('p', { class: `m-attente${nuit ? ' m-nuit' : ''}`, 'data-lire': lu(texte), html: `<i aria-hidden="true">${nuit ? '🌙' : '⏳'}</i><span>${html(texte)}</span>` }));
+    art.dataset.lire = `${parole} ${lu(texte)}`;
+    return art;
+  }
+  if (coursEnCours(dr, actuel)) {
+    // Un cours : pas de 「おわった」 avant les 5 dernières minutes.
+    const texte = 'おわりの 時間《じかん》に なったら チェック できるよ。';
+    art.append(el('p', { class: 'm-attente m-cours', 'data-lire': lu(texte), html: `<i aria-hidden="true">🏫</i><span>${html(texte)}</span>` }));
     art.dataset.lire = `${parole} ${lu(texte)}`;
     return art;
   }
@@ -299,6 +306,8 @@ export function demanderFin(d, it) {
   const m = dr.maintenant;
   const attente = tropTot(dr, courant);
   if (attente) { refuserFin(courant, attente, m); return; }
+  const reste = coursEnCours(dr, courant);
+  if (reste) { refuserCours(courant, reste, m); return; }
   if (!reglages.verifier) { marquerFait(d, it); return; }
 
   // Le temps mis, et les variables des phrases.
@@ -364,6 +373,25 @@ function refuserFin(it, attente, m) {
   parler(lire);
 }
 
+// Un cours pas encore fini : on explique (phrase tirée de la liste 「finFixe」), et on ne coche pas.
+function refuserCours(it, reste, m) {
+  const c = it.carte;
+  const vars = {
+    nom: { html: nomHtml(c), lire: nomLu(c) },
+    fin: { html: heureHtml(it.fin), lire: heureLue(it.fin) },
+    reste: varDuree(reste),
+  };
+  const texte = composer(tirer('finFixe', liste('finFixe'), Object.keys(vars)) || 'まだ だよ。', vars);
+  const contenu = el('div', { class: 'verif' });
+  contenu.append(el('div', { class: `verif-tete lieu-${c.lieu}`, html: `${visuel(c, 'grand')}<span class="verif-nom">${nomHtml(c)}</span>` }));
+  const bloc = el('div', { class: 'verif-contexte verif-avant', 'data-lire': texte.lire });
+  if (reglages.horloge) bloc.insertAdjacentHTML('beforeend', svgHorloge(m, it.fin, { titre: texte.lire }));
+  bloc.append(el('p', { html: texte.html }));
+  contenu.append(bloc, bouton('わかった', fermerFeuille, { classe: 'btn btn-principal btn-large verif-ok' }));
+  ouvrirFeuille({ titre: '', contenu, classe: 'feuille-verif' });
+  parler(texte.lire);
+}
+
 /* ----- Cocher, photographier ----- */
 
 export function marquerFait(d, it, { proposer = true } = {}) {
@@ -426,8 +454,14 @@ function ouvrirActivite(d, it) {
   if (!dr.passe || courant.fait) {
     if (courant.fait) {
       actions.append(bouton('まだ', () => { oublierFait(d, courant); fermerFeuille(); }, { classe: 'btn', icone: ICONE_RETOUR }));
-    } else if (dr.passe || (dr.aujourdhui && !tropTot(dr, courant))) {
+    } else if (dr.passe || (dr.aujourdhui && !tropTot(dr, courant) && !coursEnCours(dr, courant))) {
       actions.append(bouton('おわった', () => { fermerFeuille(); demanderFin(d, courant); }, { classe: 'btn btn-principal', icone: ICONE_COCHE }));
+    } else if (dr.aujourdhui) {
+      // Pas encore cochable : on dit quand ce sera possible.
+      const cours = coursEnCours(dr, courant);
+      const quand = cours ? courant.fin - AVANT_FIN_COURS : courant.debut - 15;
+      const t = `${heureLue(quand)}から チェック できるよ。`;
+      contenu.append(el('p', { class: 'detail-info', 'data-lire': t, html: `${heureHtml(quand)}${html('から チェック できるよ。')}` }));
     }
   }
   if (c.routine && routine(c.routine)) {

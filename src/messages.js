@@ -25,6 +25,10 @@ export const CATEGORIES = [
   { id: 'aLheure', groupe: 'reaction', fr: "À l'heure (moins de 10 min avant la fin, jusqu'à 5 min après)", ja: 'ちょうど いい じかん' },
   { id: 'tard', groupe: 'reaction', fr: 'Après coup (plus de 5 min après la fin)', ja: 'おわりの 時間を すぎて から' },
   { id: 'sansHeure', groupe: 'reaction', fr: 'Activité sans heure de fin', ja: 'おわりの 時間が ない 予定' },
+  {
+    id: 'finFixe', groupe: 'refus',
+    fr: 'Cours pas encore fini (on ne peut pas cocher avant 5 min de la fin)', ja: '授業が まだ おわって いない（チェック できない）',
+  },
   { id: 'verifFort', groupe: 'question', fr: 'Question générale, quand c\'est fini tôt', ja: 'はやく おわった ときの 質問' },
   { id: 'verifNormal', groupe: 'question', fr: 'Question générale, les autres fois', ja: 'ふつうの 質問' },
   { id: 'mada', groupe: 'mada', fr: 'Réponse à 「まだ」', ja: '「まだ」の あとの ことば' },
@@ -64,6 +68,11 @@ export const MESSAGES_DEFAUT = {
     'おつかれさま！',
     'よく がんばったね！',
     'やったね！',
+  ],
+  finFixe: [
+    '{nom}は {fin}まで だよ。 まだ おわって いないよ。',
+    'まだ {reste} あるよ。 {fin}まで がんばろう！',
+    '{fin}に なったら チェック できるよ。',
   ],
   verifFort: [
     'ほんとうに 最後《さいご》まで できた？',

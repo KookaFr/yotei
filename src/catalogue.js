@@ -8,6 +8,8 @@
    - important : à ne pas oublier (mis en avant dans la semaine) ;
    - verif : les questions possibles quand l'élève appuie sur 「おわった」 (une est tirée au hasard ;
      sans question, une question générale : messages.js) ;
+   - trajet : un trajet (通学, 下校) : on peut arriver en avance, l'heure de fin n'est pas fixe ;
+   - finFixe : l'heure de fin est fixe (par défaut : les cartes de l'école, sauf les trajets) ;
    - mochimono : les affaires à emporter ce jour-là [{ emoji, texte }] (semaine, きょう, 明日の 準備).
    Les parents peuvent modifier une carte (photo, nom) ou en créer : donnees.js les garde à part.
    ====================================================================== */
@@ -23,7 +25,7 @@ const m = (emoji, texte) => ({ emoji, texte });
 
 export const CARTES = [
   // --- École ---
-  c('tsugaku', 'gakko', '🚌', '通学《つうがく》', '学校《がっこう》に 行《い》きました。'),
+  c('tsugaku', 'gakko', '🚌', '通学《つうがく》', '学校《がっこう》に 行《い》きました。', { trajet: true }),
   c('asanokai', 'gakko', '🌅', '朝《あさ》の 会《かい》', '朝《あさ》の 会《かい》に 出《で》ました。'),
   c('kokugo', 'gakko', '📖', '国語《こくご》', '国語《こくご》の 勉強《べんきょう》を しました。'),
   c('sugaku', 'gakko', '🔢', '数学《すうがく》', '数学《すうがく》の 勉強《べんきょう》を しました。'),
@@ -39,7 +41,7 @@ export const CARTES = [
   c('hiruyasumi', 'gakko', '☀️', '昼休《ひるやす》み', '昼休《ひるやす》みに 休《やす》みました。'),
   c('souji', 'gakko', '🧹', '掃除《そうじ》', '掃除《そうじ》を しました。'),
   c('kaerinokai', 'gakko', '👋', '帰《かえ》りの 会《かい》', '帰《かえ》りの 会《かい》に 出《で》ました。'),
-  c('gekou', 'gakko', '🚌', '下校《げこう》', '家《いえ》に 帰《かえ》りました。'),
+  c('gekou', 'gakko', '🚌', '下校《げこう》', '家《いえ》に 帰《かえ》りました。', { trajet: true }),
   c('bukatsu', 'gakko', '⚽', '部活動《ぶかつどう》', '部活動《ぶかつどう》を しました。'),
   c('jisshu', 'gakko', '🏭', '実習《じっしゅう》', '実習《じっしゅう》に 行《い》きました。', { important: true, mochimono: [m('🦺', '作業着《さぎょうぎ》'), m('🥤', '水筒《すいとう》')] }),
   c('ensoku', 'gakko', '🚍', '遠足《えんそく》', '遠足《えんそく》に 行《い》きました。', { important: true, mochimono: [m('🍱', 'お弁当《べんとう》'), m('🥤', '水筒《すいとう》')] }),

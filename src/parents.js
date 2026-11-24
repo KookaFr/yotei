@@ -16,6 +16,7 @@ import {
 import {
   CATEGORIES, changerListe, liste, MESSAGES_DEFAUT, questionsCarte,
 } from './messages.js';
+import { finFixe } from './journee.js';
 import { $, copie, echapper, el, uid } from './outils.js';
 import {
   chargerPhotos, nouvellePhoto, photosDepuisTexte, photosEnTexte, supprimerPhoto,
@@ -419,6 +420,8 @@ function editerCarte(c0) {
   sansPhoto.addEventListener('change', () => { c.sansPhoto = sansPhoto.checked; });
   const important = el('input', { type: 'checkbox', checked: Boolean(c.important) });
   important.addEventListener('change', () => { c.important = important.checked; });
+  const fixe = el('input', { type: 'checkbox', checked: finFixe(c) });
+  fixe.addEventListener('change', () => { c.finFixe = fixe.checked; });
   // もちもの : une ligne par affaire (émoji + nom).
   const affaires = el('div', { class: 'p-mochimono' });
   const dessinerAffaires = () => {
@@ -467,6 +470,7 @@ function editerCarte(c0) {
     champ(L('Étapes liées', 'つなぐ てじゅん'), routineSel),
     el('label', { class: 'p-case' }, sansPhoto, el('span', { text: L('Ne pas proposer de photo (toilettes, bain…)', '写真を すすめない（トイレ、おふろなど）') })),
     el('label', { class: 'p-case' }, important, el('span', { text: L('Important, à ne pas oublier : mis en avant dans 「こんしゅう」', 'わすれては いけない 予定：「こんしゅう」で 目立たせる') })),
+    el('label', { class: 'p-case' }, fixe, el('span', { text: L("Heure de fin fixe (cours) : 「おわった」 seulement dans les 5 dernières minutes", 'おわりの 時間が 決まって いる（授業）：おわる 5分前から チェック できる') })),
   );
   const actions = el('div', { class: 'p-ligne' });
   actions.append(btnP(L('Enregistrer', '保存'), () => {
@@ -497,6 +501,12 @@ function editerCarte(c0) {
 
 /* ----- Messages de 「おわった」 : une liste de phrases par catégorie ----- */
 
+const NOMS_GROUPES = {
+  reaction: ['1. Réaction au temps mis', '1. かかった 時間への ひとこと'],
+  refus: ['Cours pas encore fini', '授業が まだ おわって いない'],
+  question: ['2. Question de vérification (si la carte n\'en a pas)', '2. たしかめる 質問（カードに ない とき）'],
+  mada: ['3. Après 「まだ」', '3. 「まだ」の あと'],
+};
 const EXEMPLE_VARS = {
   nom: 'おやつ', debut: 'ごご 4:40', fin: 'ごご 5:00', reste: '11ぷん', duree: '9ふん', retard: '20ぷん',
 };
@@ -518,7 +528,7 @@ function blocMessages() {
   CATEGORIES.forEach((cat) => {
     if (cat.groupe !== groupe) {
       groupe = cat.groupe;
-      b.append(el('p', { class: 'p-sous-titre', text: { reaction: L('1. Réaction au temps mis', '1. かかった 時間への ひとこと'), question: L('2. Question de vérification (si la carte n\'en a pas)', '2. たしかめる 質問（カードに ない とき）'), mada: L('3. Après 「まだ」', '3. 「まだ」の あと') }[groupe] }));
+      b.append(el('p', { class: 'p-sous-titre', text: L(...NOMS_GROUPES[groupe]) }));
     }
     const zone = el('textarea', { rows: String(Math.max(3, liste(cat.id).length)), class: 'p-texte' });
     zone.value = liste(cat.id).join('\n');
