@@ -1,7 +1,7 @@
 /* よてい : fonctionnement hors ligne.
    VERSION change à chaque mise à jour (npm run version-sw) : le nouveau cache se remplit, puis la page
    propose « あたらしく する » ; l'ancienne version reste servie jusqu'à ce qu'on accepte. */
-const VERSION = 'yotei-v13-8ae0ad9';
+const VERSION = 'yotei-v14-9c695e9';
 const FICHIERS = [
   './index.html', './yotei.css', './manifest.webmanifest',
   './icone.svg', './icone-180.png', './icone-192.png', './icone-512.png', './icone-maskable-512.png',
