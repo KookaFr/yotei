@@ -8,7 +8,7 @@ Elle fait suite à くらべよう (https://kookafr.github.io/kurabe/) et repren
 
 | Onglet | Contenu |
 |---|---|
-| **きょう** | L'activité en cours en grand (「いま」), la suivante (「つぎ」), puis 「これからの よてい」, regroupé par moment de la journée (朝 6じ〜, 昼 10じ〜, 午後 2じ〜, 夜 6じ〜). Ce qui est fini est rangé dessous, replié : 「おわった こと」. Le bouton 「おわった」 coche l'activité, puis propose une photo pour la ふりかえり. |
+| **きょう** | L'activité en cours en grand (「いま」), la suivante (「つぎ」), puis 「その あとの よてい」 (sans répéter les deux cartes du haut), regroupé par moment de la journée (朝 6じ〜, 昼 10じ〜, 午後 2じ〜, 夜 6じ〜). Ce qui est fini est rangé dessous, replié : 「おわった こと」. Le bouton 「おわった」 coche l'activité, puis propose une photo pour la ふりかえり. |
 | **こんしゅう** | La semaine, du plus simple au plus détaillé. 「かんたん」 : pour chaque jour, une barre des lieux de 6 h à 22 h (maison orange, école bleu, dehors vert), la même échelle pour tous les jours, et dessous seulement ce qu'il ne faut pas oublier (jour férié, événements, activités importantes ou inhabituelles). Toucher un lieu montre ses activités, toucher le jour ouvre son programme. 「くわしく」 ajoute les images de chaque moment. |
 | **こんげつ** | Le calendrier du mois : dimanche et jours fériés en rouge, samedi en bleu ; les événements ; 「あと 3にち」 pour les prochains. |
 | **てじゅん** | Les étapes d'une activité, une seule à la fois, avec la frise et un « bravo » à la fin (朝の したく, 手を 洗う, 明日の 準備…). |

@@ -254,14 +254,18 @@ export function rendreJour(conteneur, d = aujourdhui(), { retour = null } = {}) 
 
   if (estAuj) {
     // Aujourd'hui : ce qui reste à faire d'abord ; ce qui est fini en dessous, replié.
-    const aVenir = dr.items.filter((it) => it.statut === 'maintenant' || it.statut === 'avenir');
+    // Ce que montrent déjà les cartes 「いま」 et 「つぎ」 n'est pas répété dans la liste.
+    const enHaut = new Set();
+    if (dr.actuel) enHaut.add(dr.actuel.act.id);
+    if (dr.commence && dr.suivant) enHaut.add(dr.suivant.act.id);
+    const aVenir = dr.items.filter((it) => (it.statut === 'maintenant' || it.statut === 'avenir') && !enHaut.has(it.act.id));
     const finies = dr.items.filter((it) => it.statut === 'fait' || it.statut === 'passe');
     if (aVenir.length) {
-      const titre = finies.length ? 'これからの 予定《よてい》' : '今日《きょう》の 予定《よてい》';
+      const titre = enHaut.size ? 'その あとの 予定《よてい》' : '今日《きょう》の 予定《よてい》';
       page.append(el('h2', { class: 'titre-liste', 'data-lire': lu(titre), html: html(titre) }), listeParMoments(d, aVenir));
     }
     if (finies.length) {
-      const ouvert = voirFinies || !aVenir.length;
+      const ouvert = voirFinies || !dr.actuel;
       const b = el('button', {
         type: 'button', class: 'titre-finies', 'aria-expanded': String(ouvert), 'aria-label': `おわった こと、 ${finies.length}こ`,
         html: `${ICONE_COCHE}<span>${html('おわった こと')}</span><span class="nb-finies">${finies.length}</span>`
