@@ -10,7 +10,9 @@ import { html } from './texte.js';
 import { message } from './ui.js';
 import { parler, taire } from './voix.js';
 
-export const microPossible = () => Boolean(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+// La page d'essai sur claude.ai n'a pas accès au micro : le 🎤 n'y apparaît pas (il marche dans l'appli installée).
+export const microPossible = () => !window.YOTEI_ARTIFACT
+  && Boolean(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
 const DUREE_MAX = 30;
 
 const typeAudio = () => ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg']
