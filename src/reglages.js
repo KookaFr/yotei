@@ -21,7 +21,8 @@ const DEFAUT = {
   verifier: true,         // 「おわった」 : regarder l'heure et poser une question avant de cocher
   ecoleQuestions: true,   // 「がっこうの ふりかえり」 : questions au retour de l'école
   ecoleDetail: 'detail',  // 'detail' (moment par moment, préféré, souci, rapporté) ou 'court'
-  envoi: 'non',           // compte rendu aux parents : 'non' | 'mail' (e-mail déjà rempli) | 'partage' (LINE…)
+  ecoleVoix: true,        // 🎤 : répondre avec sa voix à quelques questions
+  envoi: 'line',          // compte rendu aux parents, envoyé par l'élève : 'line' | 'mail' (e-mail déjà rempli) | 'partage' | 'non'
   envoiMail: '',          // adresse(s) des parents, séparées par des virgules
   envoiLangue: '',        // 'ja' | 'fr' ('' : la langue de l'espace parents)
   photos: true,           // proposer une photo quand une activité est finie

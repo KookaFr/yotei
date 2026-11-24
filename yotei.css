@@ -971,3 +971,17 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .p-compte-rendu { padding: 10px 12px; border-radius: 12px; background: var(--papier); border: 2px solid var(--ligne); }
 .p-compte-rendu pre { margin: 6px 0; white-space: pre-wrap; font-family: var(--police); font-size: .92em; }
 .lecteur.ecole .lecteur-pied .btn > span { white-space: normal; line-height: 1.2; }
+
+/* 🎤 et envoi */
+.micro { display: flex; flex-wrap: wrap; gap: 10px; }
+.micro .btn i { font-style: normal; font-family: var(--emoji); font-size: 1.3em; }
+.micro-go { flex: 1 1 220px; border-color: #c4261d; color: #c4261d; }
+.micro-stop { flex: 1 1 220px; background: #c4261d; border-color: #c4261d; color: #fff; animation: pulse 1.2s ease-in-out infinite; }
+.micro-temps { min-width: 2.4em; padding: 0 .4em; border-radius: 999px; background: rgba(255, 255, 255, .25); font-size: .9em; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 8px rgba(196, 38, 29, .25); } }
+.micro-ecouter i { font-style: normal; font-family: var(--emoji); }
+.ecole-lignes { display: flex; flex-direction: column; gap: 8px; }
+.ecole-ligne { display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 8px 14px; border: 3px solid var(--bord); border-radius: 14px; background: var(--surface); font-weight: 700; font-size: 1.1em; text-align: left; }
+.ecole-ligne i { font-style: normal; font-family: var(--emoji); font-size: 1.5em; }
+.btn-line { background: #06c755; border-color: #06c755; color: #fff; }
+.etape .btn { margin-top: 6px; }

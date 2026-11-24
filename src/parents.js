@@ -17,7 +17,9 @@ import {
   CATEGORIES, changerListe, liste, MESSAGES_DEFAUT, questionsCarte,
 } from './messages.js';
 import { finFixe } from './journee.js';
-import { envoyerCompteRendu, historiqueEcole, texteCompteRendu } from './vues/ecole.js';
+import {
+  boutonsVoix, envoyerCompteRendu, historiqueEcole, texteCompteRendu,
+} from './vues/ecole.js';
 import { $, copie, echapper, el, uid } from './outils.js';
 import {
   chargerPhotos, nouvellePhoto, photosDepuisTexte, photosEnTexte, supprimerPhoto,
@@ -561,15 +563,18 @@ function blocEcole() {
   ) }));
   b.append(
     caseR('ecoleQuestions', L("Proposer les questions au retour de l'école", '学校の あとに 質問を 出す')),
+    caseR('ecoleVoix', L('🎤 Répondre aussi avec sa voix (pourquoi c\'était bien, ce qui s\'est passé, un message)', '🎤 声でも 答えられる（楽しかった わけ、こまった こと、メッセージ）')),
     champ(L('Questions', '質問'), choixRadio('ecoleDetail', [['detail', L('Détaillées (moment par moment, préféré, souci, rapporté)', 'くわしく')], ['court', L('Courtes (comment c\'était, ce qu\'il a fait, souci)', 'みじかく')]],
       reglages.ecoleDetail, (v) => ecrireReglages({ ecoleDetail: v }))),
     el('p', { class: 'p-sous-titre', text: L('Compte rendu aux parents', 'お家の 人への おしらせ') }),
     el('p', { class: 'p-aide', text: L(
-      "L'appli n'a pas de serveur : rien ne part tout seul. À la fin des questions, votre enfant appuie sur 「おうちの ひとに おくる」 : un e-mail déjà rempli s'ouvre (il n'a plus qu'à l'envoyer), ou la feuille de partage (LINE…). Les comptes rendus restent aussi ici.",
+      "C'est votre enfant qui envoie, pour en prendre l'habitude. À la fin des questions, l'appli lui relit le compte rendu (「これで いい？」, il peut corriger), puis il appuie sur 「LINEで おくる」 : LINE s'ouvre avec le texte, il choisit votre conversation et envoie. De retour dans l'appli : 「おくれた？」. Tant que ce n'est pas envoyé, 「きょう」 le lui rappelle. (Pas de serveur : rien ne part sans lui.) Les messages vocaux 🎤 s'envoient à la suite, par le partage du téléphone.",
       'このアプリには サーバーが ないので、自動では 送られません。質問の さいごに 子どもが「おうちの ひとに おくる」を おすと、宛先と 本文が 入った メールが 開きます（送信を おすだけ）。または 共有（LINE など）。下にも のこります。',
     ) }),
-    champ(L('Envoyer', '送りかた'), choixRadio('envoi', [['non', L('Ne pas envoyer (lire ici seulement)', '送らない（ここで 見る）')],
-      ['mail', L('Par e-mail déjà rempli', 'メール（宛先と 本文 入り）')], ['partage', L('Par la feuille de partage (LINE…)', '共有（LINE など）')]],
+    champ(L('Envoyer', '送りかた'), choixRadio('envoi', [
+      ['line', L('Par LINE (recommandé) : LINE s\'ouvre avec le texte, il choisit la conversation et envoie', 'LINE（おすすめ）：文が 入った LINEが 開き、相手を えらんで 送る')],
+      ['mail', L('Par e-mail déjà rempli', 'メール（宛先と 本文 入り）')], ['partage', L('Par la feuille de partage', '共有メニュー')],
+      ['non', L('Ne pas envoyer (lire ici seulement)', '送らない（ここで 見る）')]],
     reglages.envoi, (v) => { ecrireReglages({ envoi: v }); rendreParents(); })),
   );
   if (reglages.envoi === 'mail') {
@@ -586,7 +591,9 @@ function blocEcole() {
     const cr = texteCompteRendu(d, reglages.envoiLangue || reglages.langue);
     if (!cr) return;
     const bloc = el('div', { class: 'p-compte-rendu' });
-    bloc.append(el('p', { class: 'p-label', text: `${cr.titre}${r.envoye ? ` · ${L('envoyé', '送信済み')}` : ''}` }), el('pre', { text: cr.corps }));
+    bloc.append(el('p', { class: 'p-label', text: `${cr.titre} · ${r.envoye ? L('envoyé par votre enfant', '子どもが 送信済み') : L('pas encore envoyé', 'まだ 送って いない')}` }), el('pre', { text: cr.corps }));
+    const voix = boutonsVoix(r);
+    if (voix.length) bloc.append(el('div', { class: 'p-ligne' }, ...voix));
     bloc.append(el('div', { class: 'p-ligne' },
       btnP(L('Copier', 'コピー'), async () => { try { await navigator.clipboard.writeText(`${cr.titre}\n${cr.corps}`); } catch { /* rien */ } }),
       reglages.envoi !== 'non' ? btnP(L('Envoyer', '送る'), () => envoyerCompteRendu(d)) : null));

@@ -20,7 +20,9 @@ import {
   categorieTemps, composer, liste, questionsCarte, tirer, varDuree,
 } from '../messages.js';
 import { nav } from '../nav.js';
-import { lancerEcole, proposerEcole, remettreAPlusTard } from './ecole.js';
+import {
+  aEnvoyer, lancerEcole, proposerEcole, remettreAPlusTard,
+} from './ecole.js';
 import { el } from '../outils.js';
 import { chargerPhotos, nouvellePhoto, supprimerPhoto } from '../photos.js';
 import { reglages } from '../reglages.js';
@@ -239,6 +241,15 @@ export function rendreJour(conteneur, d = aujourdhui(), { retour = null } = {}) 
   }
   const bandeau = bandeauEvenements(d);
   if (bandeau) page.append(bandeau);
+  // Le compte rendu de l'école est prêt mais pas encore envoyé : on le rappelle.
+  if (dr.aujourdhui && aEnvoyer(d)) {
+    const rappel = el('section', { class: 'invite-ecole', 'data-lire': 'がっこうの ふりかえりを おうちの ひとに おくろう！' });
+    rappel.append(el('p', { html: `<i aria-hidden="true">📨</i><span>${html('学校《がっこう》の ふりかえりを お家《うち》の 人《ひと》に おくろう！')}</span>` }));
+    const actions = el('div', { class: 'm-actions' });
+    actions.append(bouton('おくる', () => lancerEcole(d, () => nav.rafraichir(), { depart: 'relire' }), { classe: 'btn btn-principal', icone: ICONE_COCHE }));
+    rappel.append(actions);
+    page.append(rappel);
+  }
   // Au retour de l'école : 「がっこうの こと、 おしえて！」
   if (proposerEcole(d, dr)) {
     const invite = el('section', { class: 'invite-ecole', 'data-lire': 'がっこうの こと、 おしえて！' });
