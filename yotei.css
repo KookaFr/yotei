@@ -50,6 +50,7 @@
     --bon-fond: #173a27;
     --danger: #ff8a80;
     --voile: rgba(0, 0, 0, .6);
+    --sur-lieu: #10161a;   /* texte sur les couleurs de lieu, claires en sombre (le blanc n'y faisait que 2,2:1) */
     --gakko: #7fa6ff;
     --gakko-fond: #1c2742;
     --ie: #f0a15c;
@@ -66,7 +67,7 @@
 :root[data-theme="dark"] {
   --papier: #14181a; --surface: #1d2326; --encre: #eef2ee; --encre-douce: #a8b3b5; --ligne: #2c3437; --bord: #4a5652;
   --action: #86a9ff; --action-texte: #0b1430; --bon: #52c985; --bon-fond: #173a27; --danger: #ff8a80; --voile: rgba(0, 0, 0, .6);
-  --gakko: #7fa6ff; --gakko-fond: #1c2742; --ie: #f0a15c; --ie-fond: #3a2715; --soto: #5cc282; --soto-fond: #173a27;
+  --sur-lieu: #10161a; --gakko: #7fa6ff; --gakko-fond: #1c2742; --ie: #f0a15c; --ie-fond: #3a2715; --soto: #5cc282; --soto-fond: #173a27;
   --dimanche: #ff7b70; --samedi: #7fa6ff; --part: rgba(255, 112, 84, .8); --part-longue: rgba(255, 112, 84, .35);
   color-scheme: dark;
 }
@@ -179,7 +180,7 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .jour-sem { color: var(--jour, inherit); }
 .btn-lire { width: 52px; height: 52px; }
 .btn-parents { flex-direction: column; gap: 0; min-height: 52px; padding: 0 .7em; font-size: .85em; line-height: 1.1; border-width: 2px; }
-.btn-parents span { font-size: .75em; font-weight: 400; color: var(--encre-douce); }
+.btn-parents span { font-size: max(.75em, 12px); font-weight: 400; color: var(--encre-douce); }
 
 .vue {
   flex: 1;
@@ -266,7 +267,7 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
   padding: 2px 12px;
   border-radius: 999px;
   background: var(--lieu, var(--encre-douce));
-  color: #fff;
+  color: var(--sur-lieu, #fff);
   font-weight: 700;
   font-size: .95em;
 }
@@ -333,7 +334,8 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
   text-align: left;
 }
 .act-heure { font-weight: 700; font-size: .95em; text-align: right; color: var(--encre-douce); white-space: nowrap; }
-.act-heure .heure small { display: block; font-size: .6em; line-height: 1; }
+/* ごぜん / ごご : c'est l'information matin ou soir, jamais sous 12 px. */
+.act-heure .heure small { display: block; font-size: max(.7em, 12px); line-height: 1.1; }
 .act-nom { font-weight: 700; font-size: 1.1em; min-width: 0; }
 .act-etat { display: flex; align-items: center; gap: 4px; color: var(--bon); }
 .act-etat svg { width: 30px; height: 30px; }
@@ -425,7 +427,7 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
   border: 0;
   border-right: 2px solid var(--surface);
   background: var(--lieu);
-  color: #fff;
+  color: var(--sur-lieu, #fff);
   overflow: hidden;
 }
 .bloc i { font-size: 1.25em; line-height: 1; filter: drop-shadow(0 0 2px rgba(0, 0, 0, .25)); }
@@ -1017,7 +1019,8 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .ecole-lignes { display: flex; flex-direction: column; gap: 8px; }
 .ecole-ligne { display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 8px 14px; border: 3px solid var(--bord); border-radius: 14px; background: var(--surface); font-weight: 700; font-size: 1.1em; text-align: left; }
 .ecole-ligne i { font-style: normal; font-family: var(--emoji); font-size: 1.5em; }
-.btn-line { background: #06c755; border-color: #06c755; color: #fff; }
+/* Texte foncé : le blanc sur le vert LINE ne faisait que 2,3:1. */
+.btn-line { background: #06c755; border-color: #06c755; color: #06250f; }
 .etape .btn { margin-top: 6px; }
 .ecole-rappel { display: inline-flex; align-self: flex-start; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; background: var(--surface); border: 2px solid var(--bord); font-weight: 700; }
 .ecole-rappel i { font-style: normal; font-family: var(--emoji); font-size: 1.3em; }

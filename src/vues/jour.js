@@ -7,7 +7,7 @@
 import { choisirCarte } from '../choix-carte.js';
 import {
   carte, carteDe, changerLoisirs, enleverActivite, estCadreLibre, estLoisir, estSommeil, evenementsDu, mettreDansLibre, modifierJour, noter, nouvelleActivite, oublier,
-  prochainsEvenements, routine, sorteDuJour, toutesLesCartes, trierParHeure,
+  prochainsEvenements, restaurerRemplacees, routine, sorteDuJour, toutesLesCartes, trierParHeure,
 } from '../donnees.js';
 import {
   ajouterJours, aujourdhui, cle, deCle, ecartJours, JOURS_SEMAINE, texteDans, texteDuree, versMinutes, versTexte, yomiDans, yomiDate, yomiDuree,
@@ -46,9 +46,9 @@ const estNuit = (m) => m >= 21 * 60 || m < 5 * 60;
 const peutAjouter = () => reglages.eleve === 'ajouter' || reglages.eleve === 'deplacer';
 const peutDeplacer = () => reglages.eleve === 'deplacer';
 
-// 「11がつ 23にち（にち）」
+// 「11がつ 24にち（かようび）」
 export const dateHtml = (d) => `<span class="mot">${d.getMonth() + 1}がつ</span> <span class="mot">${d.getDate()}にち</span>`
-  + `<span class="mot jour-sem jour-${d.getDay()}">（${html(JOURS_SEMAINE[d.getDay()].court, { mots: false })}）</span>`;
+  + `<span class="mot jour-sem jour-${d.getDay()}">（${html(JOURS_SEMAINE[d.getDay()].long, { mots: false })}）</span>`;
 
 // Ce qu'il a choisi de faire pendant un 自由時間 : 「📺 テレビ 🎮 ゲーム」.
 const loisirsHtml = (it, classe = 'loisirs') => (it.loisirs && it.loisirs.length
@@ -187,7 +187,8 @@ function bandeauEvenements(d) {
   const aujourdhuiEvs = evenementsDu(d);
   if (ferie) blocs.push({ texte: `今日《きょう》は ${ferie}`, emoji: '🎌', lire: `きょうは ${lu(ferie)}` });
   aujourdhuiEvs.forEach((ev) => blocs.push({ texte: `今日《きょう》は ${ev.nom}！`, emoji: ev.emoji || '⭐', lire: `きょうは ${lu(ev.nom)}！` }));
-  prochainsEvenements(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1), 2, 14).forEach((ev) => {
+  // Seulement ceux qui n'ont pas commencé : des vacances en cours sont déjà dans « 今日は … ».
+  prochainsEvenements(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1), 4, 14).filter((ev) => ev.date > cle(d)).slice(0, 2).forEach((ev) => {
     const n = ecartJours(d, deCle(ev.date));
     blocs.push({ texte: `${ev.nom}まで ${texteDans(n)}`, emoji: ev.emoji || '⭐', lire: `${lu(ev.nom)}まで ${yomiDans(n)}` });
   });
@@ -654,7 +655,7 @@ function choisirLoisirs(d, it) {
     fermerFeuille();
     nav.rafraichir();
     montrerActivite(it.act.id, { briller: true });
-    parler(choisis.size ? `${[...choisis].map((id) => nomLu(carte(id))).join('と ')}を するんだね。` : 'わかった。');
+    parler(choisis.size ? `${[...choisis].map((id) => nomLu(carte(id))).join('と ')}だね。` : 'わかった。');
   }, { classe: 'btn btn-principal btn-large', icone: ICONE_COCHE });
   contenu.append(grille, el('div', { class: 'choix-pied' }, ok));
   ouvrirFeuille({ titre: `${it.carte.nom}に なにを する？`, contenu, classe: 'feuille-haute' });
@@ -716,17 +717,15 @@ export function inserer(d, idCarte, {
       const a = versMinutes(fin);
       const items = deroulement(d).items;
       const remplace = [];
-      activitesEntre(items, de, a).forEach((it) => {
-        const i = liste.findIndex((x) => x.id === it.act.id);
-        if (i < 0) return;
-        remplace.push({ act: { ...liste[i] }, apres: i > 0 ? liste[i - 1].id : null });
-        liste.splice(i, 1);
-      });
+      // La place de chacune est relevée avant d'en enlever aucune : au retour, l'ordre d'origine revient.
+      const aEnlever = activitesEntre(items, de, a).map((it) => liste.findIndex((x) => x.id === it.act.id)).filter((i) => i >= 0).sort((x, y) => x - y);
+      aEnlever.forEach((i) => remplace.push({ act: { ...liste[i] }, apres: i > 0 ? liste[i - 1].id : null }));
+      [...aEnlever].reverse().forEach((i) => liste.splice(i, 1));
       items.forEach((it) => {
         const x = liste.find((y) => y.id === it.act.id);
         const f = versMinutes(it.act.fin);
         if (!x || it.debutEff === null || it.debutEff >= de || f === null || f <= de) return;
-        remplace.push({ act: { ...x } });
+        remplace.push({ act: { ...x }, raccourcie: true });
         x.fin = debut;
       });
       if (remplace.length) act.remplace = remplace;
@@ -823,6 +822,8 @@ function deplacerVers(d, it, cible) {
     const i = liste.findIndex((x) => x.id === it.act.id);
     if (i < 0) return;
     const [act] = liste.splice(i, 1);
+    // Une activité longue qui bouge rend d'abord ce qu'elle avait remplacé.
+    restaurerRemplacees(liste, act);
     // Une activité déplacée suit sa nouvelle place : elle n'a plus d'heure fixe.
     act.debut = '';
     act.fin = '';
@@ -841,7 +842,7 @@ function deplacerVers(d, it, cible) {
 function deplacerDans(d, it, cadre) {
   modifierJour(d, (liste) => {
     const i = liste.findIndex((x) => x.id === it.act.id);
-    if (i >= 0) liste.splice(i, 1);
+    if (i >= 0) restaurerRemplacees(liste, liste.splice(i, 1)[0]);
     const a = liste.find((x) => x.id === cadre.act.id);
     if (a) a.loisirs = [...new Set([...(a.loisirs || []), it.carte.id])];
   });

@@ -27,31 +27,74 @@ const nouvelEtat = () => ({
   exemple: true,                   // l'emploi du temps est encore celui d'exemple
 });
 
+const estObjet = (x) => Boolean(x) && typeof x === 'object' && !Array.isArray(x);
+
+// Un stockage illisible n'est pas perdu : on le met de côté avant que l'exemple ne l'écrase.
 function lire(cleStockage, defaut) {
+  let t = null;
+  try { t = localStorage.getItem(cleStockage); } catch { return defaut(); }
+  if (!t) return defaut();
   try {
-    const t = localStorage.getItem(cleStockage);
-    return t ? JSON.parse(t) : defaut();
-  } catch {
-    return defaut();
-  }
+    const v = JSON.parse(t);
+    if (estObjet(v)) return v;
+  } catch { /* illisible : voir dessous */ }
+  try { localStorage.setItem(`${cleStockage}.secours`, t); } catch { /* plus de place */ }
+  return defaut();
 }
 
-export let etat = lire(CLE, nouvelEtat);
-if (!etat.personnes) etat.personnes = copie(PERSONNES);   // données d'avant les personnes
+// Les émoji viennent des parents ou d'une sauvegarde : jamais de balise (ils sont insérés dans la page).
+function assainirEmoji(x) {
+  if (Array.isArray(x)) x.forEach(assainirEmoji);
+  else if (estObjet(x)) {
+    Object.keys(x).forEach((k) => {
+      if (k === 'emoji') x[k] = typeof x[k] === 'string' ? x[k].replace(/[<>&"'`]/g, '').slice(0, 16) : '';
+      else assainirEmoji(x[k]);
+    });
+  }
+  return x;
+}
+
+// Un état toujours complet et du bon type, quoi que contienne le stockage ou une sauvegarde importée
+// (une liste à la place d'un objet donnait un écran blanc, espace parents compris).
+export function normaliserEtat(brut) {
+  const base = nouvelEtat();
+  const e = { ...base, ...(estObjet(brut) ? brut : {}) };
+  ['semaine', 'jours'].forEach((k) => { if (!estObjet(e[k])) e[k] = base[k]; });
+  ['vacances', 'evenements', 'routines', 'cartes', 'personnes'].forEach((k) => { if (!Array.isArray(e[k])) e[k] = base[k]; });
+  for (let j = 1; j <= 7; j++) if (!Array.isArray(e.semaine[j])) e.semaine[j] = base.semaine[j] || [];
+  Object.keys(e.jours).forEach((k) => { if (!Array.isArray(e.jours[k])) delete e.jours[k]; });
+  e.evenements = e.evenements.filter((ev) => estObjet(ev) && typeof ev.date === 'string');
+  return assainirEmoji(e);
+}
+
+export let etat = normaliserEtat(lire(CLE, nouvelEtat));
 export const journal = lire(CLE_JOURNAL, () => ({}));   // { date: { idActivité: { fait, a, photo, humeur } } }
+
+// L'appareil a refusé une écriture (stockage plein, navigation privée) : l'appli le dit, sinon les
+// changements disparaîtraient sans prévenir au prochain démarrage.
+let panne = false;
+function ecrire(cleStockage, valeur) {
+  try {
+    localStorage.setItem(cleStockage, JSON.stringify(valeur));
+    panne = false;
+  } catch {
+    if (!panne) window.dispatchEvent(new CustomEvent('yotei-stockage-plein'));
+    panne = true;
+  }
+}
 
 const ecouteurs = new Set();
 export const surChangement = (fn) => ecouteurs.add(fn);
 export function enregistrer() {
-  try { localStorage.setItem(CLE, JSON.stringify(etat)); } catch { /* stockage plein ou indisponible */ }
+  ecrire(CLE, etat);
   ecouteurs.forEach((fn) => fn());
 }
 export function enregistrerJournal() {
-  try { localStorage.setItem(CLE_JOURNAL, JSON.stringify(journal)); } catch { /* idem */ }
+  ecrire(CLE_JOURNAL, journal);
   ecouteurs.forEach((fn) => fn());
 }
 export function remplacerEtat(nouveau) {
-  etat = { ...nouvelEtat(), ...nouveau };
+  etat = normaliserEtat(nouveau);
   enregistrer();
 }
 export function reinitialiser() {
@@ -199,15 +242,34 @@ export function enleverActivite(d, idAct) {
     const i = liste.findIndex((x) => x.id === idAct);
     if (i < 0) return;
     const [act] = liste.splice(i, 1);
-    if (!act.remplace) return;
-    act.remplace.forEach((r) => {
-      const j = liste.findIndex((x) => x.id === r.act.id);
-      if (j >= 0) { liste[j] = r.act; return; }      // raccourcie : on remet l'original
-      const k = r.apres ? liste.findIndex((x) => x.id === r.apres) : -1;
-      if (k >= 0) liste.splice(k + 1, 0, r.act); else liste.push(r.act);
-    });
-    liste.splice(0, liste.length, ...trierParHeure(liste));
+    restaurerRemplacees(liste, act);
   });
+  // Revenue au programme habituel, la date n'est plus « modifiée » : elle suit de nouveau la semaine type,
+  // les jours fériés et les « pas d'école » décidés ensuite par les parents.
+  if (JSON.stringify(etat.jours[cle(d)]) === JSON.stringify(modeleHabituel(d))) retablirJour(d);
+}
+
+// Une activité longue qui s'en va (enlevée, déplacée, rangée dans un 自由時間) rend ce qu'elle avait pris.
+// - remplacée ({ act, apres }) : elle revient à sa place d'origine, sauf si elle est déjà là ;
+// - raccourcie ({ act, raccourcie }) : on ne lui rend que son heure de fin (ce qu'elle a reçu depuis, comme
+//   des loisirs, reste), et si elle a été enlevée entre-temps elle ne revient pas.
+export function restaurerRemplacees(liste, act) {
+  if (!act.remplace) return;
+  act.remplace.forEach((r) => {
+    const j = liste.findIndex((x) => x.id === r.act.id);
+    const raccourcie = r.raccourcie || !('apres' in r);
+    if (raccourcie) {
+      if (j >= 0) liste[j].fin = r.act.fin;
+      return;
+    }
+    if (j >= 0) return;
+    const k = r.apres ? liste.findIndex((x) => x.id === r.apres) : -1;
+    if (k >= 0) liste.splice(k + 1, 0, r.act);
+    else if (r.apres === null) liste.unshift(r.act);
+    else liste.push(r.act);
+  });
+  delete act.remplace;
+  liste.splice(0, liste.length, ...trierParHeure(liste));
 }
 
 export const nouvelleActivite = (idCarte, debut = '', fin = '', parEleve = false) => ({

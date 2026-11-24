@@ -11,7 +11,7 @@ import {
   ajouterPersonne, carte, carteDe, estCadreLibre, estLoisir, etat,
 } from '../donnees.js';
 import {
-  affichageHeure, ajouterJours, aujourdhui, cle, JOURS_SEMAINE, minutesMaintenant, versTexte,
+  affichageHeure, ajouterJours, aujourdhui, cle, JOURS_SEMAINE, minutesMaintenant, versTexte, yomiDate,
 } from '../heure.js';
 import {
   activitesEntre, deroulement, periodeDe, PERIODES,
@@ -128,8 +128,8 @@ export function choisirPlace(dDepart, idCarte, surFin, { jourFixe = false } = {}
 
     // Le jour (sauf si la date est déjà choisie).
     if (jourFixe) {
-      const t = `${jour.getMonth() + 1}がつ ${jour.getDate()}にち（${JOURS_SEMAINE[jour.getDay()].court}）`;
-      contenu.append(el('p', { class: `placer-date jour-${jour.getDay()}`, 'data-lire': lu(t), html: html(t, { mots: false }) }));
+      const t = `${jour.getMonth() + 1}がつ ${jour.getDate()}にち（${JOURS_SEMAINE[jour.getDay()].long}）`;
+      contenu.append(el('p', { class: `placer-date jour-${jour.getDay()}`, 'data-lire': yomiDate(jour), html: html(t, { mots: false }) }));
     } else {
       contenu.append(el('p', { class: 'cq-label', 'data-lire': 'いつ？', html: html('いつ？') }));
       const jours = el('div', { class: 'cq-chips' });

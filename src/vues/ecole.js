@@ -10,7 +10,7 @@
 
 import { choisirCarte } from '../choix-carte.js';
 import { carte, noter } from '../donnees.js';
-import { aujourdhui, cle, JOURS_SEMAINE, minutesMaintenant } from '../heure.js';
+import { aujourdhui, cle, JOURS_SEMAINE, minutesMaintenant, texteNbJours } from '../heure.js';
 import { deroulement, mochimonoDu, PERIODES } from '../journee.js';
 import { el } from '../outils.js';
 import { chargerPhotos } from '../photos.js';
@@ -36,9 +36,24 @@ try { reponses = JSON.parse(localStorage.getItem(CLE) || '{}'); } catch { repons
 const sauver = () => { try { localStorage.setItem(CLE, JSON.stringify(reponses)); } catch { /* rien */ } };
 export const ecoleDu = (d) => reponses[cle(d)] || null;
 export const historiqueEcole = () => Object.entries(reponses).sort(([a], [b]) => b.localeCompare(a));
-export function effacerEcole() {
+const idsVoix = (r) => Object.values((r && r.voix) || {}).filter(Boolean);
+// Tout effacer (réponses et messages vocaux) : bouton « Effacer » de l'espace parents.
+export async function effacerEcole() {
+  for (const r of Object.values(reponses)) for (const id of idsVoix(r)) await plateforme.stockage.enlever(id);
   reponses = {};
   sauver();
+}
+// Les comptes rendus plus anciens que la date donnée (même durée que les photos de la journée).
+export async function purgerEcole(avant) {
+  const limite = cle(avant);
+  let change = false;
+  for (const k of Object.keys(reponses)) {
+    if (k >= limite) continue;
+    for (const id of idsVoix(reponses[k])) await plateforme.stockage.enlever(id);
+    delete reponses[k];
+    change = true;
+  }
+  if (change) sauver();
 }
 
 /* ----- Quand proposer les questions ----- */
@@ -345,7 +360,7 @@ export function lancerEcole(d, apres = () => {}, { depart = null } = {}) {
   afficher();
 }
 
-/* ----- Envoyer : l'élève le fait lui-même ; au retour dans l'appli, 「おくれた？」 ----- */
+/* ----- Envoyer : l'élève le fait lui-même ; au retour dans l'appli, 「おくった？」 ----- */
 
 const NOMS_ENVOI = { line: 'LINEで おくる', mail: 'メールで おくる', partage: 'おくる' };
 
@@ -382,14 +397,14 @@ function attendreRetour(d, corps, pied, fermer) {
     if (document.hidden) return;
     document.removeEventListener('visibilitychange', demander);
     clearTimeout(secours);
-    const zone = el('div', { class: 'etape', 'data-lire': 'おくれた？' });
-    zone.innerHTML = `<span class="visuel enorme" aria-hidden="true">📨</span><p class="etape-texte">${html('おくれた？')}</p>`;
+    const zone = el('div', { class: 'etape', 'data-lire': 'おくった？' });
+    zone.innerHTML = `<span class="visuel enorme" aria-hidden="true">📨</span><p class="etape-texte">${html('おくった？')}</p>`;
     corps.replaceChildren(zone);
     pied.replaceChildren(
       bouton('まだ', () => ecranEnvoi(d, corps, pied, fermer), { classe: 'btn btn-large', icone: ICONE_GAUCHE }),
       bouton('うん、 おくった', () => { marquerEnvoye(d); bravoEnvoi(d, corps, pied, fermer); }, { classe: 'btn btn-principal btn-large', icone: ICONE_COCHE }),
     );
-    parler('おくれた？');
+    parler('おくった？');
   };
   document.addEventListener('visibilitychange', demander);
   // Si l'appli ne s'est pas cachée (LINE ouvert dans une autre fenêtre, ordinateur…), on demande quand même.
@@ -400,7 +415,7 @@ function bravoEnvoi(d, corps, pied, fermer, copie = false) {
   if (!copie) marquerEnvoye(d);
   sons.fin();
   const n = joursDeSuite(d);
-  const texte = copie ? 'コピーしたよ。 LINEに はって おくってね。' : (n >= 2 ? `やったね！ ${n}日《にち》 つづけて おくったよ！` : 'やったね！ おくったよ！');
+  const texte = copie ? 'コピーしたよ。 LINEに はって おくってね。' : (n >= 2 ? `やったね！ ${texteNbJours(n)} つづけて おくったよ！` : 'やったね！ おくったよ！');
   const zone = el('div', { class: 'etape', 'data-lire': lu(texte) });
   zone.innerHTML = `<span class="visuel enorme" aria-hidden="true">${copie ? '📋' : '🎉'}</span><p class="etape-texte">${html(texte)}</p>`;
   const r = ecoleDu(d) || {};
@@ -530,14 +545,14 @@ export function marquerEnvoye(d) {
 // Fini mais pas encore envoyé : 「きょう」 le rappelle.
 export const aEnvoyer = (d) => reglages.envoi !== 'non' && Boolean(ecoleDu(d) && ecoleDu(d).fini && !ecoleDu(d).envoye);
 
-// Un seul bouton. Résultat : 'ouvert' (LINE ou l'e-mail se sont ouverts : on demandera 「おくれた？」),
+// Un seul bouton. Résultat : 'ouvert' (LINE ou l'e-mail se sont ouverts : on demandera 「おくった？」),
 // 'envoye' (la feuille de partage a fini), 'copie' (texte copié, à coller), ou false.
 export async function envoyerCompteRendu(d) {
   const cr = texteCompteRendu(d, reglages.envoiLangue || reglages.langue);
   if (!cr) return false;
   const texte = `${cr.titre}\n${cr.corps}`;
   if (reglages.envoi === 'line') {
-    // LINE s'ouvre (dans une autre fenêtre : l'appli reste là pour demander 「おくれた？」) avec le texte écrit ;
+    // LINE s'ouvre (dans une autre fenêtre : l'appli reste là pour demander 「おくった？」) avec le texte écrit ;
     // il choisit la conversation et envoie.
     const url = `https://line.me/R/share?text=${encodeURIComponent(texte)}`;
     if (!window.open(url, '_blank')) window.location.href = url;

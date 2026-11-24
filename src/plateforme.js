@@ -142,8 +142,11 @@ const installation = {
   possible: !window.YOTEI_ARTIFACT && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost'),
   enregistrerServiceWorker(surNouvelleVersion) {
     let rechargement = false;
+    // À la première installation, le service worker prend la main sans qu'il y ait rien de nouveau :
+    // on ne recharge que si la page était déjà servie par une version précédente.
+    const dejaControlee = Boolean(navigator.serviceWorker.controller);
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (rechargement) return;
+      if (rechargement || !dejaControlee) return;
       rechargement = true;
       location.reload();
     });

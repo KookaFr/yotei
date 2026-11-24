@@ -128,7 +128,8 @@ export function diaporama(d, depart = 0) {
       activable(b, () => {
         noter(d, it.act.id, { humeur: x.id });
         sons.page();
-        parler(`${lu(x.texte)}ね。`);
+        // 「たのしかったね」, mais 「ふつうだったね」 (pas 「ふつうね」).
+        parler(/[たい]$/.test(lu(x.texte)) ? `${lu(x.texte)}ね。` : `${lu(x.texte)}だったね。`);
         afficher();
       });
       sentiments.append(b);

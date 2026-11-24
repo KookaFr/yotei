@@ -32,6 +32,7 @@ import {
 import {
   basculerLecture, installerLectureAuToucher, majBoutonsLire, parler, sons,
 } from './voix.js';
+import { purgerEcole } from './vues/ecole.js';
 import { lancerEtapes, rendreEtapes } from './vues/etapes.js';
 import { dateHtml, rendreJour } from './vues/jour.js';
 import { remettreMois, rendreMois } from './vues/mois.js';
@@ -147,14 +148,17 @@ function verifierAnnonces() {
     annonceDebut = id;
     sons.carillon();
     plateforme.retour.vibrer([200, 100, 200]);
-    setTimeout(() => parler(`${nomLu(a.carte)}の じかんだよ。`), 1900);
+    // 「つぎは 〜だよ」 : juste avec un nom (さぎょう) comme avec un verbe (おきる), ce que 「〜の じかん」 n'est pas.
+    setTimeout(() => parler(`つぎは ${nomLu(a.carte)}だよ。`), 1900);
   }
   if (reglages.preavis && a.finEff !== null && annoncePreavis !== id) {
     const reste = a.finEff - dr.maintenant;
-    if (reste <= reglages.preavis && reste > reglages.preavis - 1) {
+    // Pas de préavis pour une activité plus courte que lui : il couperait l'annonce du début.
+    const assezLongue = a.debut === null || a.finEff - a.debut > reglages.preavis + 1;
+    if (assezLongue && reste <= reglages.preavis && reste > reglages.preavis - 1) {
       annoncePreavis = id;
       sons.bientot();
-      setTimeout(() => parler(`あと ${yomiDuree(reglages.preavis)}で ${nomLu(a.carte)}は おわりだよ。`), 800);
+      setTimeout(() => parler(`あと ${yomiDuree(reglages.preavis)}で おわりだよ。`), 800);
     }
   }
 }
@@ -251,12 +255,20 @@ installerLectureAuToucher();
 appliquerReglages();
 rendreTout();
 
+window.addEventListener('yotei-stockage-plein', () => {
+  window.alert(reglages.langue === 'ja'
+    ? 'この 端末に 保存できませんでした（空き容量が ありません）。「おうちの人」で 古い 写真を けしてください。'
+    : "L'appareil a refusé d'enregistrer (stockage plein). Dans l'espace parents, effacez d'anciennes photos : sinon les changements seront perdus à la fermeture.");
+});
+
 (async () => {
   await plateforme.stockage.ouvrir();
   // Les photos de la journée trop anciennes sont effacées (réglage des parents).
   if (reglages.garderPhotos > 0) {
     const ids = photosAnciennes(ajouterJours(aujourdhui(), -reglages.garderPhotos));
     for (const id of ids) await supprimerPhoto(id);
+    // Les comptes rendus de l'école et leurs messages vocaux suivent la même durée.
+    await purgerEcole(ajouterJours(aujourdhui(), -reglages.garderPhotos));
   }
   rendreTout({ garderDefilement: true });
   if (plateforme.installation.possible) plateforme.installation.enregistrerServiceWorker(proposerMiseAJour);

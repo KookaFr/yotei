@@ -18,7 +18,7 @@ import {
 } from './messages.js';
 import { finFixe } from './journee.js';
 import {
-  boutonsVoix, envoyerCompteRendu, historiqueEcole, texteCompteRendu,
+  boutonsVoix, effacerEcole, envoyerCompteRendu, historiqueEcole, texteCompteRendu,
 } from './vues/ecole.js';
 import { $, copie, echapper, el, uid } from './outils.js';
 import {
@@ -640,7 +640,7 @@ function blocEcole() {
       reglages.ecoleDetail, (v) => ecrireReglages({ ecoleDetail: v }))),
     el('p', { class: 'p-sous-titre', text: L('Compte rendu aux parents', 'お家の 人への おしらせ') }),
     el('p', { class: 'p-aide', text: L(
-      "C'est votre enfant qui envoie, pour en prendre l'habitude. À la fin des questions, l'appli lui relit le compte rendu (「これで いい？」, il peut corriger), puis il appuie sur 「LINEで おくる」 : LINE s'ouvre avec le texte, il choisit votre conversation et envoie. De retour dans l'appli : 「おくれた？」. Tant que ce n'est pas envoyé, 「きょう」 le lui rappelle. (Pas de serveur : rien ne part sans lui.) Les messages vocaux 🎤 s'envoient à la suite, par le partage du téléphone.",
+      "C'est votre enfant qui envoie, pour en prendre l'habitude. À la fin des questions, l'appli lui relit le compte rendu (「これで いい？」, il peut corriger), puis il appuie sur 「LINEで おくる」 : LINE s'ouvre avec le texte, il choisit votre conversation et envoie. De retour dans l'appli : 「おくった？」. Tant que ce n'est pas envoyé, 「きょう」 le lui rappelle. (Pas de serveur : rien ne part sans lui.) Les messages vocaux 🎤 s'envoient à la suite, par le partage du téléphone.",
       'このアプリには サーバーが ないので、自動では 送られません。質問の さいごに 子どもが「おうちの ひとに おくる」を おすと、宛先と 本文が 入った メールが 開きます（送信を おすだけ）。または 共有（LINE など）。下にも のこります。',
     ) }),
     champ(L('Envoyer', '送りかた'), choixRadio('envoi', [
@@ -792,11 +792,16 @@ function blocSauvegarde() {
     if (!f) return;
     try {
       const donnees = JSON.parse(await f.text());
-      if (donnees.app !== 'yotei' || !donnees.etat) throw new Error('format');
+      if (!donnees || donnees.app !== 'yotei' || !donnees.etat || typeof donnees.etat !== 'object' || Array.isArray(donnees.etat)) throw new Error('format');
       if (!window.confirm(L("Remplacer l'emploi du temps de cet appareil par celui du fichier ?", 'この 機器の 予定を ファイルの 予定に 入れかえますか？'))) return;
       await photosDepuisTexte(donnees.photos);
       remplacerEtat(donnees.etat);
-      if (donnees.reglages) remplacerReglages({ ...donnees.reglages, langue: reglages.langue });
+      // L'adresse et le mode d'envoi des comptes rendus restent ceux de cet appareil : un fichier reçu
+      // ne doit pas pouvoir rediriger les messages de l'enfant sans que les parents le voient.
+      if (donnees.reglages && typeof donnees.reglages === 'object') {
+        const garde = Object.fromEntries(Object.entries(reglages).filter(([k]) => /mail|envoi|line/i.test(k)));
+        remplacerReglages({ ...donnees.reglages, ...garde, langue: reglages.langue });
+      }
       window.alert(L('Sauvegarde ouverte.', 'バックアップを 開きました。'));
       location.reload();
     } catch {
@@ -812,8 +817,9 @@ function blocSauvegarde() {
     }, 'btn btn-principal'),
     btnP(L('Ouvrir une sauvegarde', 'バックアップを 開く'), () => entree.click())));
   b.append(el('p', { class: 'p-sous-titre', text: L('Effacer', 'けす') }), el('div', { class: 'p-ligne' },
-    btnP(L('Effacer les coches et photos de la journée', 'チェックと ふりかえりの 写真を けす'), async () => {
-      if (!window.confirm(L('Effacer tout le journal (coches, photos, humeurs) ?', 'ぜんぶ けしますか？'))) return;
+    btnP(L('Effacer les coches, les photos de la journée et les comptes rendus de l’école', 'チェック・ふりかえりの 写真・学校の ふりかえりを けす'), async () => {
+      if (!window.confirm(L('Effacer tout le journal (coches, photos, humeurs) et les comptes rendus de l’école (réponses et messages vocaux) ?', 'チェック、写真、学校の ふりかえり（こえも）を ぜんぶ けしますか？'))) return;
+      await effacerEcole();
       const ids = Object.values(journal).flatMap((notes) => Object.values(notes).map((x) => x.photo).filter(Boolean));
       for (const id of ids) await supprimerPhoto(id);
       Object.keys(journal).forEach((k) => delete journal[k]);

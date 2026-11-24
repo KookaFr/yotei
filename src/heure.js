@@ -98,17 +98,32 @@ export const JOURS_SEMAINE = [
 ];
 export const yomiDate = (d) => `${yomiMois(d.getMonth() + 1)} ${yomiJourMois(d.getDate())}、 ${JOURS_SEMAINE[d.getDay()].yomi}`;
 // « あと 3にち » : あした, あさって, あと Nにち.
+// Un nombre de jours : ふつか, みっか… とおか, じゅうよっか, はつか, にじゅうよっか, さんじゅうよっか ; sinon 〜にち
+// (じゅういちにち, さんじゅうごにち, ひゃくにち). Juste jusqu'à 999 jours.
+const CENT = ['', 'ひゃく', 'にひゃく', 'さんびゃく', 'よんひゃく', 'ごひゃく', 'ろっぴゃく', 'ななひゃく', 'はっぴゃく', 'きゅうひゃく'];
+export function yomiNbJours(n) {
+  if (n === 1) return 'いちにち';
+  if (JOURS_MOIS[n]) return JOURS_MOIS[n];
+  const c = CENT[Math.floor(n / 100) % 10];
+  const d = DIX[Math.floor((n % 100) / 10)];
+  const u = n % 10;
+  if (u === 4) return `${c}${d}よっか`;
+  return `${c}${d}${['', 'いち', 'に', 'さん', '', 'ご', 'ろく', 'しち', 'はち', 'く'][u]}にち`;
+}
+// Le même nombre écrit : ｜3日《みっか》 (la lecture entière sur « 3日 »), 11日《にち》.
+export const texteNbJours = (n) => (yomiNbJours(n).endsWith('にち') ? `${n}日《にち》` : `｜${n}日《${yomiNbJours(n)}》`);
+// « あと みっか » : きょう, あした, あさって, あと 〜.
 export function yomiDans(n) {
-  if (n === 0) return 'きょう';
+  if (n <= 0) return 'きょう';
   if (n === 1) return 'あした';
   if (n === 2) return 'あさって';
-  return `あと ${yomiJourMois(n).replace('ついたち', 'いちにち')}`;
+  return `あと ${yomiNbJours(n)}`;
 }
 export function texteDans(n) {
-  if (n === 0) return '今日《きょう》';
+  if (n <= 0) return '今日《きょう》';
   if (n === 1) return '明日《あした》';
   if (n === 2) return 'あさって';
-  return `あと ${n}日《にち》`;
+  return `あと ${texteNbJours(n)}`;
 }
 
 /* ----- Jours fériés japonais (祝日法, règles en vigueur depuis 2020) ----- */
