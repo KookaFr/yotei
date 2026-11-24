@@ -21,6 +21,7 @@ import {
   ICONE_PHOTO, message, nomHtml, nomLu, ouvrirPlein, visuel,
 } from '../ui.js';
 import { lireElement, parler, sons } from '../voix.js';
+import { activitesEcole, ecoleDu, lancerEcole } from './ecole.js';
 import { dateHtml } from './jour.js';
 
 export const HUMEURS = [
@@ -51,6 +52,12 @@ export function rendreRecit(conteneur) {
   tete.append(suiv);
   page.append(tete);
 
+  // Le retour de l'école de ce jour : le faire, ou relire ce qu'il a dit.
+  if (activitesEcole(d).length && reglages.ecoleQuestions) {
+    const fait = ecoleDu(d) && ecoleDu(d).fini;
+    page.append(bouton(fait ? '学校《がっこう》の ふりかえり（もう いちど）' : '学校《がっこう》の ふりかえり',
+      () => lancerEcole(d, () => rendreRecit(conteneur)), { classe: `btn btn-large${fait ? '' : ' btn-principal'} btn-ecole`, icone: '<i class="ecole-emoji" aria-hidden="true">🏫</i>' }));
+  }
   const items = faits(d);
   if (!items.length) {
     page.append(el('p', { class: 'vide', 'data-lire': 'まだ おわった ことが ないよ。 きょうの よていで 「おわった」を おしてね。',

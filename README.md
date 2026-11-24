@@ -19,6 +19,8 @@ Elle fait suite à くらべよう (https://kookafr.github.io/kurabe/) et repren
 - l'heure en chiffres avec sa lecture en hiragana (「ごぜん じゅうじ にじゅうごふん」, 「あと 15ふん」) ;
 - une barre qui diminue.
 
+**「がっこうの ふりかえり」 (retour de l'école)** : le téléphone ne sert pas à l'école, alors on raconte en rentrant. Les jours d'école, une fois le trajet du retour fini, 「きょう」 propose 「がっこうの こと、 おしえて！」 (ou 「あとで」 ; aussi dans 「ふりかえり」). Des questions courtes, une par écran, avec des choix en images et la voix : comment c'était ; ce qu'il a fait le matin, à midi, l'après-midi (les cours prévus, plus 「ほかの こと」) ; ce qu'il a préféré ; s'il y a eu un souci (quand, l'a-t-il dit à l'enseignant) ; ce qu'il rapporte (プリント, 連絡帳, affaires du jour…). Version courte possible. Les cours choisis sont cochés. À la fin, un compte rendu pour les parents, en japonais (kanji) ou en français, envoyé par un seul bouton 「おうちの ひとに おくる」 : e-mail déjà rempli (destinataire, objet, texte), ou feuille de partage (LINE…). Pas de serveur : rien ne part sans ce bouton. Les 14 derniers comptes rendus restent dans l'espace parents (copier, envoyer).
+
 **Couleurs par lieu** : école en bleu, maison en orange, dehors en vert, partout (liste, semaine, image partagée).
 
 **「おわった」 vérifie avant de cocher** : une activité qui commence dans plus de 15 minutes ne peut pas être cochée (pas de bouton ; la nuit, 「いまは よる。 ゆっくり やすもう。」). Un cours à l'école (carte 「がっこう」 avec une heure de fin, sauf les trajets 通学 et 下校) ne peut être coché que dans les 5 dernières minutes : la carte dit 「おわりの じかんに なったら チェック できるよ。」 (réglable carte par carte : « heure de fin fixe »). Sinon, une fenêtre montre deux choses :

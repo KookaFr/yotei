@@ -19,6 +19,11 @@ const DEFAUT = {
   voixNom: '',
   eleve: 'deplacer',      // ce que l'élève peut changer : 'rien' | 'ajouter' | 'deplacer'
   verifier: true,         // 「おわった」 : regarder l'heure et poser une question avant de cocher
+  ecoleQuestions: true,   // 「がっこうの ふりかえり」 : questions au retour de l'école
+  ecoleDetail: 'detail',  // 'detail' (moment par moment, préféré, souci, rapporté) ou 'court'
+  envoi: 'non',           // compte rendu aux parents : 'non' | 'mail' (e-mail déjà rempli) | 'partage' (LINE…)
+  envoiMail: '',          // adresse(s) des parents, séparées par des virgules
+  envoiLangue: '',        // 'ja' | 'fr' ('' : la langue de l'espace parents)
   photos: true,           // proposer une photo quand une activité est finie
   garderPhotos: 60,       // jours (0 : toujours)
   onglets: [...ONGLETS],

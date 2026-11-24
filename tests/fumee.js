@@ -71,6 +71,17 @@ const controler = (page) => page.evaluate(() => {
           }
         }
         await page.locator('.onglet').first().click();
+        // Retour de l'école : les premières questions.
+        const invite = page.locator('.invite-ecole .btn-principal');
+        if (await invite.count()) {
+          await invite.click();
+          await page.locator('.lecteur-pied .btn').click();
+          await verifier('がっこう : humeur');
+          await page.locator('.ecole-option').first().click();
+          await page.locator('.lecteur-pied .btn-principal').click();
+          await verifier('がっこう : moment');
+          await page.locator('.lecteur-tete .btn-rond').click();
+        }
         const ajout = page.locator('.pied-jour .btn', { hasText: 'いれる' });
         if (await ajout.count()) {
           await ajout.click();

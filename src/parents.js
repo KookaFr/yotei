@@ -17,6 +17,7 @@ import {
   CATEGORIES, changerListe, liste, MESSAGES_DEFAUT, questionsCarte,
 } from './messages.js';
 import { finFixe } from './journee.js';
+import { envoyerCompteRendu, historiqueEcole, texteCompteRendu } from './vues/ecole.js';
 import { $, copie, echapper, el, uid } from './outils.js';
 import {
   chargerPhotos, nouvellePhoto, photosDepuisTexte, photosEnTexte, supprimerPhoto,
@@ -74,6 +75,7 @@ export function rendreParents() {
     section('etapes', L('Étapes (てじゅん)', 'てじゅん'), blocRoutines()),
     section('cartes', L('Cartes et photos', 'カードと 写真'), blocCartes()),
     section('messages', L('Messages de 「おわった」', '「おわった」の ことば'), blocMessages()),
+    section('ecole', L("Retour de l'école (がっこうの ふりかえり)", '学校の ふりかえり'), blocEcole()),
     section('reglages', L('Réglages', 'せってい'), blocReglages()),
     section('sauvegarde', L('Sauvegarde, autre appareil', 'バックアップ・ほかの 機器へ'), blocSauvegarde()),
   );
@@ -546,6 +548,50 @@ function blocMessages() {
     b.append(el('div', { class: 'p-champ' }, el('span', { class: 'p-label', text: L(cat.fr, cat.ja) }), zone, el('div', { class: 'p-ligne' }, ecouter, retablir)));
   });
   b.append(el('p', { class: 'p-aide', text: L(`Exemple des variables : ${Object.entries(EXEMPLE_VARS).map(([k, v]) => `{${k}} = ${v}`).join(' · ')}`, '') }));
+  return b;
+}
+
+/* ----- Retour de l'école : les questions, et le compte rendu aux parents ----- */
+
+function blocEcole() {
+  const b = el('div', { class: 'p-reglages' });
+  b.append(el('p', { class: 'p-aide', text: L(
+    "Les jours d'école, après la fin des cours, 「きょう」 propose 「がっこうの こと、 おしえて！」 : des questions courtes, une par écran, avec des choix en images (comment c'était, ce qu'il a fait le matin, à midi, l'après-midi, ce qu'il a préféré, s'il y a eu un souci, ce qu'il rapporte). Les cours choisis sont cochés. Aussi dans 「ふりかえり」.",
+    '学校の 日、授業が おわった あと、「きょう」に「がっこうの こと、おしえて！」が 出ます。1つずつ 絵で 答える 質問です（どうだった、朝・昼・午後に したこと、いちばん 楽しかったこと、困ったこと、持って帰ったもの）。',
+  ) }));
+  b.append(
+    caseR('ecoleQuestions', L("Proposer les questions au retour de l'école", '学校の あとに 質問を 出す')),
+    champ(L('Questions', '質問'), choixRadio('ecoleDetail', [['detail', L('Détaillées (moment par moment, préféré, souci, rapporté)', 'くわしく')], ['court', L('Courtes (comment c\'était, ce qu\'il a fait, souci)', 'みじかく')]],
+      reglages.ecoleDetail, (v) => ecrireReglages({ ecoleDetail: v }))),
+    el('p', { class: 'p-sous-titre', text: L('Compte rendu aux parents', 'お家の 人への おしらせ') }),
+    el('p', { class: 'p-aide', text: L(
+      "L'appli n'a pas de serveur : rien ne part tout seul. À la fin des questions, votre enfant appuie sur 「おうちの ひとに おくる」 : un e-mail déjà rempli s'ouvre (il n'a plus qu'à l'envoyer), ou la feuille de partage (LINE…). Les comptes rendus restent aussi ici.",
+      'このアプリには サーバーが ないので、自動では 送られません。質問の さいごに 子どもが「おうちの ひとに おくる」を おすと、宛先と 本文が 入った メールが 開きます（送信を おすだけ）。または 共有（LINE など）。下にも のこります。',
+    ) }),
+    champ(L('Envoyer', '送りかた'), choixRadio('envoi', [['non', L('Ne pas envoyer (lire ici seulement)', '送らない（ここで 見る）')],
+      ['mail', L('Par e-mail déjà rempli', 'メール（宛先と 本文 入り）')], ['partage', L('Par la feuille de partage (LINE…)', '共有（LINE など）')]],
+    reglages.envoi, (v) => { ecrireReglages({ envoi: v }); rendreParents(); })),
+  );
+  if (reglages.envoi === 'mail') {
+    const mail = el('input', { type: 'email', value: reglages.envoiMail || '', placeholder: 'maman@example.com, papa@example.com', autocomplete: 'email' });
+    mail.addEventListener('change', () => ecrireReglages({ envoiMail: mail.value.trim() }));
+    b.append(champ(L('Adresse(s) des parents', 'お家の 人の メールアドレス'), mail, L('Gardée sur cet appareil seulement. Plusieurs adresses : séparées par des virgules.', 'この 機器の 中だけに 保存します。')));
+  }
+  b.append(champ(L('Langue du compte rendu', 'おしらせの ことば'), selectR('envoiLangue', [['', L("Celle de l'espace parents", 'この 画面と 同じ')], ['ja', '日本語'], ['fr', 'Français']])));
+  const hist = historiqueEcole().filter(([, r]) => r.fini).slice(0, 14);
+  b.append(el('p', { class: 'p-sous-titre', text: L('Derniers comptes rendus', 'さいきんの おしらせ') }));
+  if (!hist.length) b.append(el('p', { class: 'p-aide', text: L('Aucun pour le moment.', 'まだ ありません。') }));
+  hist.forEach(([k, r]) => {
+    const d = deCle(k);
+    const cr = texteCompteRendu(d, reglages.envoiLangue || reglages.langue);
+    if (!cr) return;
+    const bloc = el('div', { class: 'p-compte-rendu' });
+    bloc.append(el('p', { class: 'p-label', text: `${cr.titre}${r.envoye ? ` · ${L('envoyé', '送信済み')}` : ''}` }), el('pre', { text: cr.corps }));
+    bloc.append(el('div', { class: 'p-ligne' },
+      btnP(L('Copier', 'コピー'), async () => { try { await navigator.clipboard.writeText(`${cr.titre}\n${cr.corps}`); } catch { /* rien */ } }),
+      reglages.envoi !== 'non' ? btnP(L('Envoyer', '送る'), () => envoyerCompteRendu(d)) : null));
+    b.append(bloc);
+  });
   return b;
 }
 

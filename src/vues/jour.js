@@ -20,6 +20,7 @@ import {
   categorieTemps, composer, liste, questionsCarte, tirer, varDuree,
 } from '../messages.js';
 import { nav } from '../nav.js';
+import { lancerEcole, proposerEcole, remettreAPlusTard } from './ecole.js';
 import { el } from '../outils.js';
 import { chargerPhotos, nouvellePhoto, supprimerPhoto } from '../photos.js';
 import { reglages } from '../reglages.js';
@@ -238,6 +239,18 @@ export function rendreJour(conteneur, d = aujourdhui(), { retour = null } = {}) 
   }
   const bandeau = bandeauEvenements(d);
   if (bandeau) page.append(bandeau);
+  // Au retour de l'école : 「がっこうの こと、 おしえて！」
+  if (proposerEcole(d, dr)) {
+    const invite = el('section', { class: 'invite-ecole', 'data-lire': 'がっこうの こと、 おしえて！' });
+    invite.append(el('p', { html: `<i aria-hidden="true">🏫</i><span>${html('学校《がっこう》の こと、 おしえて！')}</span>` }));
+    const actions = el('div', { class: 'm-actions' });
+    actions.append(
+      bouton('あとで', () => { remettreAPlusTard(d); nav.rafraichir(); }, { classe: 'btn' }),
+      bouton('はじめる', () => lancerEcole(d, () => nav.rafraichir()), { classe: 'btn btn-principal', icone: ICONE_COCHE }),
+    );
+    invite.append(actions);
+    page.append(invite);
+  }
 
   if (estAuj) {
     page.append(carteMaintenant(d, dr));
