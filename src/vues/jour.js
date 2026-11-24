@@ -10,7 +10,7 @@ import {
   routine, sorteDuJour,
 } from '../donnees.js';
 import {
-  ajouterJours, aujourdhui, cle, deCle, ecartJours, JOURS_SEMAINE, texteDans, texteDuree, versTexte, yomiDans, yomiDate, yomiDuree, yomiHeure,
+  ajouterJours, aujourdhui, cle, deCle, ecartJours, JOURS_SEMAINE, texteDans, texteDuree, versTexte, yomiDans, yomiDate, yomiDuree,
 } from '../heure.js';
 import { barre, repereGrandeAiguille, svgHorloge } from '../horloge.js';
 import {
@@ -206,22 +206,16 @@ function ligneActivite(d, it) {
 
 let voirFinies = false;
 
-// L'heure repère d'un moment : 6じ, 10じ, 2じ (ou 14じ en 24 h).
-export const repereMoment = (p) => {
-  const h = p.debut / 60;
-  return reglages.format24 ? h : (h % 12 || 12);
-};
-
-// La liste groupée par moment de la journée (あさ, ひる, ごご, よる), avec l'heure repère.
+// La liste groupée par moment de la journée (あさ, ひる, ごご, よる). Sans heure de début du moment :
+// elle gênait la lecture à côté des heures des activités.
 function listeParMoments(d, items) {
   const bloc = el('div', { class: 'moments' });
   PERIODES.forEach((p) => {
     const du = items.filter((it) => it.periode === p.id);
     if (!du.length) return;
-    const h = repereMoment(p);
     bloc.append(el('h3', {
-      class: 'moment-titre', 'data-lire': `${lu(p.nom)}。 ${yomiHeure(h)}から`,
-      html: `<span class="moment-emoji" aria-hidden="true">${p.emoji}</span>${html(p.nom)}<small>${h}じ〜</small>`,
+      class: 'moment-titre', 'data-lire': lu(p.nom),
+      html: `<span class="moment-emoji" aria-hidden="true">${p.emoji}</span>${html(p.nom)}`,
     }));
     const ol = el('ol', { class: 'liste-jour' });
     du.forEach((it) => ol.append(ligneActivite(d, it)));

@@ -25,7 +25,6 @@ import {
   plageLue, visuel,
 } from '../ui.js';
 import { parler } from '../voix.js';
-import { repereMoment } from './jour.js';
 
 let decalage = 0;
 let niveau = 'simple';   // 'simple' : lieux + à retenir ; 'detail' : les images par moment
@@ -33,12 +32,12 @@ let niveau = 'simple';   // 'simple' : lieux + à retenir ; 'detail' : les image
 const pos = (min) => ((Math.min(Math.max(min, DEBUT_JOUR), FIN_JOUR) - DEBUT_JOUR) / (FIN_JOUR - DEBUT_JOUR)) * 100;
 const MAX_RETENIR = 4;
 
-// La ligne d'échelle, alignée sur les barres : 朝 昼 午後 夜, avec l'heure repère (6じ〜, 10じ〜, 2じ〜, 6じ〜).
+// La ligne d'échelle, alignée sur les barres : 朝 昼 午後 夜.
 function echelle() {
   const e = el('div', { class: 'sem-echelle', 'aria-hidden': 'true' });
   const corps = el('div', { class: 'echelle-corps' });
   PERIODES.forEach((p) => corps.append(el('span', {
-    class: 'echelle-moment', html: `<span><i>${p.emoji}</i>${html(p.nom, { mots: false })}</span><small>${repereMoment(p)}じ〜</small>`,
+    class: 'echelle-moment', html: `<span><i>${p.emoji}</i>${html(p.nom, { mots: false })}</span>`,
   })));
   e.append(el('span'), corps);
   return e;
