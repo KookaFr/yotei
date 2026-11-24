@@ -20,6 +20,7 @@ const nouvelEtat = () => ({
   semaine: exempleSemaine(),       // 1 = lundi … 7 = dimanche
   vacances: journeeRepos(),        // jours sans école (fériés, vacances)
   jours: {},                       // journées modifiées : { 'AAAA-MM-JJ': [activités] }
+  joursBase: {},                   // pour une date où l'élève a seulement ajouté : le programme habituel d'alors (JSON)
   evenements: [],                  // { id, date, fin, nom, emoji, sansEcole }
   routines: copie(ROUTINES),
   cartes: [],                      // cartes des parents, ou cartes du catalogue modifiées (même id)
@@ -59,7 +60,7 @@ function assainirEmoji(x) {
 export function normaliserEtat(brut) {
   const base = nouvelEtat();
   const e = { ...base, ...(estObjet(brut) ? brut : {}) };
-  ['semaine', 'jours'].forEach((k) => { if (!estObjet(e[k])) e[k] = base[k]; });
+  ['semaine', 'jours', 'joursBase'].forEach((k) => { if (!estObjet(e[k])) e[k] = base[k]; });
   ['vacances', 'evenements', 'routines', 'cartes', 'personnes'].forEach((k) => { if (!Array.isArray(e[k])) e[k] = base[k]; });
   for (let j = 1; j <= 7; j++) if (!Array.isArray(e.semaine[j])) e.semaine[j] = base.semaine[j] || [];
   Object.keys(e.jours).forEach((k) => { if (!Array.isArray(e.jours[k])) delete e.jours[k]; });
@@ -173,8 +174,51 @@ export function sorteDuJour(d) {
 
 export function modeleDu(d) {
   const { sorte } = sorteDuJour(d);
-  if (sorte === 'modifiee') return etat.jours[cle(d)];
+  if (sorte === 'modifiee') {
+    suivreModele(d);
+    return etat.jours[cle(d)];
+  }
   return modeleHabituel(d);
+}
+
+/* Une date où l'élève a seulement AJOUTÉ des activités ne doit pas rester figée : si les parents changent
+   ensuite la semaine type, ou déclarent ce jour « pas d'école », la date reprend le nouveau programme et
+   garde les ajouts de l'élève (et ses loisirs rangés dans un 自由時間 qui existe encore).
+   etat.joursBase[date] = le programme habituel au moment où la date a été copiée. Dès que la date est
+   changée autrement (par les parents, ou par une activité longue qui remplace des cours), elle reste telle quelle. */
+const sansLoisirs = (liste) => JSON.stringify(liste.map((a) => ({ ...a, loisirs: undefined })));
+function suivreModele(d) {
+  const k = cle(d);
+  const base = etat.joursBase && etat.joursBase[k];
+  if (!base) return;
+  const modele = modeleHabituel(d);
+  const actuel = JSON.stringify(modele);
+  if (actuel === base) return;
+  const liste = etat.jours[k];
+  let ancien;
+  try { ancien = JSON.parse(base); } catch { ancien = null; }
+  if (!Array.isArray(ancien) || sansLoisirs(liste.filter((a) => !a.parEleve)) !== sansLoisirs(ancien)) {
+    delete etat.joursBase[k];   // la date a été changée autrement : elle ne suit plus le modèle
+    return;
+  }
+  const neuf = copie(modele);
+  liste.forEach((a, i) => {
+    if (!a.parEleve) {
+      const meme = a.loisirs && neuf.find((x) => x.id === a.id);
+      if (meme) meme.loisirs = [...a.loisirs];
+      return;
+    }
+    // Un ajout sans heure reprend sa place après la même activité, si elle existe encore.
+    const avant = !a.debut && i > 0 ? neuf.findIndex((x) => x.id === liste[i - 1].id) : -1;
+    if (avant >= 0) { neuf.splice(avant + 1, 0, a); return; }
+    // Sinon à la fin de la journée, mais avant 寝る (on n'ajoute rien après le coucher).
+    const dernier = neuf[neuf.length - 1];
+    const c = dernier && carteDe(dernier);
+    if (!a.debut && c && c.sommeil) neuf.splice(neuf.length - 1, 0, a); else neuf.push(a);
+  });
+  etat.jours[k] = trierParHeure(neuf);
+  etat.joursBase[k] = actuel;
+  ecrire(CLE, etat);
 }
 // Le programme habituel de ce jour (sans les changements de cette date) : pour repérer ce qui est inhabituel.
 export function modeleHabituel(d) {
@@ -191,12 +235,14 @@ export function modifierJour(d, fn) {
   const k = cle(d);
   if (!etat.jours[k]) {
     etat.jours[k] = copie(modeleDu(d));
+    etat.joursBase[k] = JSON.stringify(modeleHabituel(d));
   }
   fn(etat.jours[k]);
   enregistrer();
 }
 export function retablirJour(d) {
   delete etat.jours[cle(d)];
+  delete etat.joursBase[cle(d)];
   enregistrer();
 }
 

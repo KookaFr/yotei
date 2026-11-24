@@ -321,7 +321,8 @@ export function choisirPlace(dDepart, idCarte, surFin, { jourFixe = false } = {}
       if (heure === null) {
         ligneHeure.append(bouton('時間《じかん》も きめる', () => {
           const p = PERIODES.find((x) => x.id === moment);
-          heure = Math.max(p.debut, auj() ? Math.ceil(minutesMaintenant() / 15) * 15 : p.debut);
+          // Jamais après 23:45 (24:00 devenait 00:00, en tête de journée et déjà passé).
+          heure = Math.min(23 * 60 + 45, Math.max(p.debut, auj() ? Math.ceil(minutesMaintenant() / 15) * 15 : p.debut));
           place = null;
           regle = 'debut';
           dessiner();

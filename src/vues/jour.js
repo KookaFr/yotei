@@ -68,7 +68,9 @@ function carteMaintenant(d, dr) {
     return art;
   }
   const { actuel, commence, maintenant } = dr;
-  if (!actuel && dr.aujourdhui && estNuit(maintenant)) return carteNuit(d, art);
+  // La nuit, ou dès que 寝る est coché (même à 20:30) : 「おやすみなさい」, pas 「ぜんぶ おわったよ」.
+  const couche = dr.items.some((it) => it.fait && estSommeil(it.carte));
+  if (!actuel && dr.aujourdhui && (estNuit(maintenant) || couche)) return carteNuit(d, art);
   if (!actuel) {
     art.classList.add('maintenant-fin');
     art.innerHTML = `<p class="m-etiquette">${html('おわり')}</p><p class="m-fin" data-lire="きょうの よていは ぜんぶ おわったよ。 おつかれさま！">`

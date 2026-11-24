@@ -52,15 +52,22 @@ let surFermeture = null;
 // Une feuille peut en ouvrir une autre (choisir une carte depuis l'éditeur d'une date) :
 // à la fermeture, la précédente revient.
 const pile = [];
+let origineFocus = null;
 export function ouvrirFeuille({ titre = '', contenu, classe = '', fermeture = null, lire = '' }) {
   const f = $('feuille');
   const boite = $('feuille-boite');
   if (!f.hidden) pile.push({ noeuds: [...boite.childNodes], classe: boite.className, fermeture: surFermeture });
+  else {
+    // Première fenêtre : on retient d'où l'on vient, et le reste de la page ne reçoit plus ni focus ni toucher.
+    origineFocus = document.activeElement;
+    ['app', 'plein'].forEach((id) => { $(id).inert = true; });
+  }
   boite.className = `feuille-boite ${classe}`;
   boite.replaceChildren();
   boite.scrollTop = 0;
   const tete = el('div', { class: 'feuille-tete' });
-  if (titre) tete.append(el('h2', { class: 'feuille-titre', html: html(titre), 'data-lire': lire || lu(titre) }));
+  if (titre) tete.append(el('h2', { class: 'feuille-titre', id: 'feuille-titre', html: html(titre), 'data-lire': lire || lu(titre) }));
+  if (titre) boite.setAttribute('aria-labelledby', 'feuille-titre'); else boite.removeAttribute('aria-labelledby');
   const fermer = el('button', { type: 'button', class: 'btn-rond btn-fermer', 'aria-label': 'とじる', 'data-lire': 'とじる', html: ICONE_FERMER });
   activable(fermer, fermerFeuille, { garde: false });
   tete.append(fermer);
@@ -91,9 +98,14 @@ export function fermerFeuille() {
   }
   f.hidden = true;
   $('feuille-boite').classList.remove('ouverte');
+  ['app', 'plein'].forEach((id) => { $(id).inert = false; });
   const fn = surFermeture;
   surFermeture = null;
   if (fn) fn();
+  // Le focus revient au bouton d'où l'on venait (s'il existe encore après le rafraîchissement).
+  const retour = origineFocus;
+  origineFocus = null;
+  if (retour && retour.isConnected && !feuilleOuverte()) { try { retour.focus({ preventScroll: true }); } catch { /* rien */ } }
 }
 export const feuilleOuverte = () => !$('feuille').hidden;
 

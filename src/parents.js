@@ -213,6 +213,7 @@ function editerDate(k) {
   const d = deCle(k);
   // On part du programme prévu ce jour-là.
   if (!etat.jours[k]) modifierJour(d, () => {});
+  delete etat.joursBase[k];   // une date réglée par les parents reste comme ils l'ont faite
   ouvrirEditeurDate(k);
 }
 function ouvrirEditeurDate(k) {
@@ -641,7 +642,7 @@ function blocEcole() {
     el('p', { class: 'p-sous-titre', text: L('Compte rendu aux parents', 'お家の 人への おしらせ') }),
     el('p', { class: 'p-aide', text: L(
       "C'est votre enfant qui envoie, pour en prendre l'habitude. À la fin des questions, l'appli lui relit le compte rendu (「これで いい？」, il peut corriger), puis il appuie sur 「LINEで おくる」 : LINE s'ouvre avec le texte, il choisit votre conversation et envoie. De retour dans l'appli : 「おくった？」. Tant que ce n'est pas envoyé, 「きょう」 le lui rappelle. (Pas de serveur : rien ne part sans lui.) Les messages vocaux 🎤 s'envoient à la suite, par le partage du téléphone.",
-      'このアプリには サーバーが ないので、自動では 送られません。質問の さいごに 子どもが「おうちの ひとに おくる」を おすと、宛先と 本文が 入った メールが 開きます（送信を おすだけ）。または 共有（LINE など）。下にも のこります。',
+      '送るのは お子さん本人です（習慣に するため）。質問の さいごに アプリが 内容を 読み上げ（「これで いい？」、直すことも できます）、「LINEで おくる」を おすと、文が 入った LINEが 開きます。お子さんが トークを えらんで 送信します。アプリに もどると「おくった？」と 聞きます。送るまでは「きょう」に お知らせが 出ます。サーバーは ないので、本人が 送らないかぎり どこにも 送られません。こえの メッセージ 🎤 は、つづけて スマホの 共有から 送れます。',
     ) }),
     champ(L('Envoyer', '送りかた'), choixRadio('envoi', [
       ['line', L('Par LINE (recommandé) : LINE s\'ouvre avec le texte, il choisit la conversation et envoie', 'LINE（おすすめ）：文が 入った LINEが 開き、相手を えらんで 送る')],

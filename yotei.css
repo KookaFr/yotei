@@ -129,9 +129,9 @@ html[data-motion="reduce"] *, html[data-motion="reduce"] *::before, html[data-mo
 .btn-principal { background: var(--action); border-color: var(--action); color: var(--action-texte); }
 .btn-danger { color: var(--danger); border-color: var(--danger); }
 .btn-petit { min-height: 46px; padding: 0 .85em; font-size: .9em; }
-.btn-mini { min-height: 40px; min-width: 40px; padding: 0 .5em; font-size: .9em; border-width: 2px; border-radius: 12px; }
+.btn-mini { min-height: 44px; min-width: 44px; padding: 0 .5em; font-size: .9em; border-width: 2px; border-radius: 12px; }
 .btn-large { min-height: 68px; font-size: 1.1em; }
-.btn:disabled, .btn-rond:disabled { opacity: .35; cursor: default; }
+.btn:disabled, .btn-rond:disabled { opacity: .5; cursor: default; }
 .btn-fait { background: var(--bon); border-color: var(--bon); color: #fff; }
 :root[data-theme="dark"] .btn-fait { color: #0b1d12; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn-fait { color: #0b1d12; } }

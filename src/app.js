@@ -185,12 +185,17 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) { de
 /* ----- Écran toujours allumé (tablette posée sur la table) ----- */
 
 let verrou = null;
+let demandeVerrou = false;   // une demande est en cours : pas de seconde (la première ne serait jamais relâchée)
 async function gererEcranAllume() {
   const voulu = reglages.ecranAllume && onglet === 'jour' && !sousVue && $('ecran-parents').hidden && !document.hidden;
   try {
-    if (voulu && !verrou && navigator.wakeLock) {
-      verrou = await navigator.wakeLock.request('screen');
-      verrou.addEventListener('release', () => { verrou = null; });
+    if (voulu && !verrou && !demandeVerrou && navigator.wakeLock) {
+      demandeVerrou = true;
+      const v = await navigator.wakeLock.request('screen').finally(() => { demandeVerrou = false; });
+      verrou = v;
+      v.addEventListener('release', () => { if (verrou === v) verrou = null; });
+      // Entre-temps on est peut-être passé dans l'espace parents : on revérifie.
+      if (!(reglages.ecranAllume && onglet === 'jour' && !sousVue && $('ecran-parents').hidden && !document.hidden)) { await v.release(); verrou = null; }
     } else if (!voulu && verrou) {
       await verrou.release();
       verrou = null;
