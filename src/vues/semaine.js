@@ -13,7 +13,7 @@ import {
   ajouterJours, aujourdhui, JOURS_SEMAINE, lundiDe, minutesMaintenant, yomiDate,
 } from '../heure.js';
 import {
-  aRetenir, blocsLieux, DEBUT_JOUR, deroulement, FIN_JOUR, PERIODES,
+  aRetenir, blocsLieux, colonnesMoments, DEBUT_JOUR, deroulement, FIN_JOUR, PERIODES,
 } from '../journee.js';
 import { nav } from '../nav.js';
 import { el } from '../outils.js';
@@ -36,6 +36,7 @@ const MAX_RETENIR = 4;
 function echelle() {
   const e = el('div', { class: 'sem-echelle', 'aria-hidden': 'true' });
   const corps = el('div', { class: 'echelle-corps' });
+  corps.style.gridTemplateColumns = colonnesMoments();
   PERIODES.forEach((p) => corps.append(el('span', {
     class: 'echelle-moment', html: `<span><i>${p.emoji}</i>${html(p.nom, { mots: false })}</span>`,
   })));
@@ -45,7 +46,8 @@ function echelle() {
 
 function barreLieux(d, dr, nomJour) {
   const barre = el('div', { class: 'barre-lieux', role: 'group', 'aria-label': `${nomJour}の ばしょ` });
-  [25, 50, 75].forEach((x) => barre.append(el('span', { class: 'tic', style: `left:${x}%` })));
+  // Un trait au début de chaque moment (12 h, 14 h, 18 h), comme l'échelle au-dessus.
+  PERIODES.slice(1).forEach((p) => barre.append(el('span', { class: 'tic', style: `left:${((p.debut - DEBUT_JOUR) / (FIN_JOUR - DEBUT_JOUR)) * 100}%` })));
   const blocs = blocsLieux(dr.items).filter((b) => b.fin > DEBUT_JOUR && b.debut < FIN_JOUR);
   blocs.forEach((b) => {
     const l = LIEUX[b.lieu];
@@ -92,6 +94,7 @@ function listeRetenir(d, dr) {
 // 「くわしく」 : les images de chaque moment, sous la barre (mêmes colonnes que l'échelle).
 function moments(dr) {
   const grille = el('div', { class: 'sem-moments' });
+  grille.style.gridTemplateColumns = colonnesMoments();
   PERIODES.forEach((p) => {
     const du = dr.items.filter((it) => it.periode === p.id);
     const cellule = el('ul', { class: 'sem-moment', 'aria-label': `${lu(p.nom)}： ${du.map((it) => nomLu(it.carte)).join('、 ')}` });

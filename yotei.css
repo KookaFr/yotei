@@ -379,7 +379,7 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .semaine { display: flex; flex-direction: column; gap: 8px; }
 .sem-echelle, .sem-jour { display: grid; grid-template-columns: 4em 1fr; gap: 0 10px; }
 .sem-echelle { padding: 4px 10px 0 2px; position: sticky; top: -14px; z-index: 2; background: var(--papier); }
-.echelle-corps { display: grid; grid-template-columns: repeat(4, 1fr); padding-bottom: 4px; }
+.echelle-corps { display: grid; grid-template-columns: 6fr 2fr 4fr 4fr; padding-bottom: 4px; }
 .echelle-moment { display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; font-size: .85em; border-left: 2px solid var(--ligne); line-height: 1.15; }
 .echelle-moment > span { display: flex; align-items: center; gap: 2px; }
 .echelle-moment small { font-size: .82em; color: var(--encre-douce); }
@@ -452,7 +452,7 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .retenir-ferie { --lieu: var(--dimanche); color: var(--dimanche); background: var(--surface); }
 .retenir-evenement { --lieu: #d99a00; --lieu-fond: #fff4cf; color: #3d2c00; }
 .retenir-plus { color: var(--encre-douce); }
-.sem-moments { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border-top: 2px dashed var(--ligne); padding-top: 6px; }
+.sem-moments { display: grid; grid-template-columns: 6fr 2fr 4fr 4fr; gap: 0; border-top: 2px dashed var(--ligne); padding-top: 6px; }
 .sem-moment { list-style: none; margin: 0; padding: 0 2px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 3px; border-left: 2px solid var(--ligne); min-height: 2em; }
 .sem-moment:first-child { border-left: 0; }
 .sem-item { display: flex; align-items: center; position: relative; }

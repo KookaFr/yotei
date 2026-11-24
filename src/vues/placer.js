@@ -69,12 +69,9 @@ export function choisirPlace(dDepart, idCarte, surFin, { jourFixe = false } = {}
     } else moment = periodeDe(minutesMaintenant()).id;
   }
 
-  // Les heures, toutes visibles, rangées par moment de la journée (🌅 6 7 8 9 / ☀️ 10 11 12 1 / 🌤️ 2 3 4 5 / 🌙 6 … 11),
+  // Les heures, toutes visibles, rangées par moment de la journée (🌅 6 … 11 / ☀️ 12 1 / 🌤️ 2 3 4 5 / 🌙 6 … 11),
   // puis les minutes en un seul toucher (ちょうど, 15ふん, 30ぷん, 45ふん). min : la plus petite valeur possible.
-  const RANGEES = [
-    { p: PERIODES[0], de: 6, a: 9 }, { p: PERIODES[1], de: 10, a: 13 },
-    { p: PERIODES[2], de: 14, a: 17 }, { p: PERIODES[3], de: 18, a: 23 },
-  ];
+  const RANGEES = PERIODES.map((p) => ({ p, de: p.debut / 60, a: Math.min(23, p.fin / 60 - 1) }));
   const grilleHeures = (valeur, min, choisir) => {
     const grille = el('div', { class: 'grille-heures' });
     RANGEES.forEach(({ p, de, a }) => {

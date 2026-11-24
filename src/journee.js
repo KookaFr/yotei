@@ -15,15 +15,19 @@ import {
 } from './donnees.js';
 import { lu } from './texte.js';
 
-/* ----- Les moments de la journée : 4 parts égales de 4 heures (6 h, 10 h, 14 h, 18 h, 22 h) ----- */
+/* ----- Les moments de la journée, sur les repères de tous les jours :
+   朝 jusqu'à midi (ごぜん), 昼 de 12 h à 14 h (déjeuner, pause), 午後 de 14 h à 18 h, 夜 après 18 h. ----- */
 export const PERIODES = [
-  { id: 'asa', nom: '朝《あさ》', emoji: '🌅', debut: 6 * 60, fin: 10 * 60 },
-  { id: 'hiru', nom: '昼《ひる》', emoji: '☀️', debut: 10 * 60, fin: 14 * 60 },
+  { id: 'asa', nom: '朝《あさ》', emoji: '🌅', debut: 6 * 60, fin: 12 * 60 },
+  { id: 'hiru', nom: '昼《ひる》', emoji: '☀️', debut: 12 * 60, fin: 14 * 60 },
   { id: 'gogo', nom: '午後《ごご》', emoji: '🌤️', debut: 14 * 60, fin: 18 * 60 },
-  { id: 'yoru', nom: '夜《よる》', emoji: '🌙', debut: 18 * 60, fin: 22 * 60 },
+  { id: 'yoru', nom: '夜《よる》', emoji: '🌙', debut: 18 * 60, fin: 24 * 60 },
 ];
 export const DEBUT_JOUR = 6 * 60;
 export const FIN_JOUR = 22 * 60;
+// La place de chaque moment sur l'échelle 6 h – 22 h (la semaine) : 6fr 2fr 4fr 4fr.
+export const colonnesMoments = () => PERIODES
+  .map((p) => `minmax(0, ${(Math.min(p.fin, FIN_JOUR) - Math.max(p.debut, DEBUT_JOUR)) / 60}fr)`).join(' ');
 // Les cours ont une heure de fin fixe : on ne les coche pas avant (cartes de l'école, sauf les trajets).
 export const finFixe = (c) => (c.finFixe ?? (c.lieu === 'gakko' && !c.trajet));
 export const AVANT_FIN = 5;
