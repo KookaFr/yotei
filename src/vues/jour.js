@@ -112,7 +112,7 @@ function carteMaintenant(d, dr) {
     const repere = reglages.horloge ? repereGrandeAiguille(maintenant, fin) : null;
     if (repere) {
       const quand = commence ? 'おわり' : 'はじまり';
-      infos.insertAdjacentHTML('beforeend', `<p class="m-indice" data-lire="ながい はりが ${repere}に きたら ${quand}。">${`${html('ながい はりが')} <b>${repere}</b>${html(`に きたら ${quand}`)}`}</p>`);
+      infos.insertAdjacentHTML('beforeend', `<p class="m-indice" data-lire="ながい はりが ${repere}の ところに きたら ${quand}。">${`${html('ながい はりが')} <b>${repere}</b>${html(`の ところに きたら ${quand}`)}`}</p>`);
     }
   }
   temps.append(infos);

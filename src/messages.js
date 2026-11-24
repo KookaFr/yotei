@@ -78,7 +78,7 @@ export const MESSAGES_DEFAUT = {
     'やったね！',
   ],
   finFixe: [
-    '{nom}は {fin}まで だよ。 まだ おわって いないよ。',
+    '{nom}は {fin}までだよ。 まだ おわって いないよ。',
     'まだ {reste} あるよ。 {fin}まで がんばろう！',
     '{fin}に なったら チェック できるよ。',
   ],

@@ -86,7 +86,7 @@ const SOUCI = [{ id: 'non', emoji: '🙆', texte: 'なかった' }, { id: 'oui',
 const PROF = [{ id: 'oui', emoji: '🙋', texte: '言《い》った' }, { id: 'non', emoji: '🤐', texte: '言《い》って いない' }];
 const QUAND_AUTRES = [
   { id: 'pause', emoji: '☀️', texte: '休《やす》み時間《じかん》' },
-  { id: 'trajet', emoji: '🚌', texte: '行《い》き 帰《かえ》り' },
+  { id: 'trajet', emoji: '🚌', texte: '行《い》き帰《かえ》り' },
   { id: 'nsp', emoji: '🤔', texte: 'わからない' },
 ];
 const RAPPORTE = [
@@ -130,7 +130,7 @@ export function lancerEcole(d, apres = () => {}, { depart = null } = {}) {
     const id = rep.souciQuand;
     if (!id || id === 'nsp') return '';
     if (id === 'pause') return '休《やす》み時間《じかん》に ';
-    if (id === 'trajet') return '行《い》き 帰《かえ》りに ';
+    if (id === 'trajet') return '行《い》き帰《かえ》りに ';
     return `${nomChoisi(id)}の とき、 `;
   };
   const moments = PERIODES.map((p) => ({ p, items: ecole.filter((it) => it.periode === p.id) })).filter((x) => x.items.length);
@@ -368,8 +368,8 @@ const NOMS_ENVOI = { line: 'LINEで おくる', mail: 'メールで おくる', 
 export function joursDeSuite(d) {
   let n = 0;
   for (const [k, r] of historiqueEcole()) {
-    if (k > cle(d) || !r.fini) continue;
-    if (!r.envoye) break;
+    if (k > cle(d)) continue;
+    if (!r.fini || !r.envoye) break;
     n += 1;
   }
   return n;

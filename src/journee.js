@@ -81,7 +81,12 @@ export function deroulement(d, maintenant = minutesMaintenant()) {
       const depart = partage ? a.debut : a.fin;
       const parts = groupe.length + (partage ? 1 : 0);
       if (b === null) part = PART_FIN;
-      else if (b > depart) part = Math.max(PART_MIN, Math.floor((b - depart) / parts / 5) * 5);
+      else if (b > depart) {
+        const juste = Math.floor((b - depart) / parts / 5) * 5;
+        // Assez de place : au moins 15 min chacune. Sinon on partage ce qu'il y a (5 min au moins),
+        // pour ne pas déborder sur l'activité à heure fixe qui suit.
+        part = juste >= PART_MIN ? juste : Math.max(5, juste);
+      }
       t = depart;
       if (partage) { a.finEff = depart + part; t += part; }
     } else if (b !== null) {

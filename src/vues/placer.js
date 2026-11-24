@@ -207,7 +207,7 @@ export function choisirPlace(dDepart, idCarte, surFin, { jourFixe = false } = {}
       }
       const nom = heure !== null ? `${nomJour(jour)}の ${heureLue(heure)}${fin !== null ? `から ${heureLue(fin)}まで` : ''}` : `${nomJour(jour)}`;
       surFin({
-        date: jour, apres: place && place.apres, avant: place && place.avant, debut: heure !== null ? versTexte(heure) : '',
+        date: jour, apres: place && place.apres, avant: place && place.avant, debut: heure !== null ? versTexte(heure) : (place && place.heureMoment !== undefined ? versTexte(place.heureMoment) : ''),
         fin: heure !== null && fin !== null ? versTexte(fin) : '', avec, texte: nom,
       });
     }, { classe: 'btn btn-principal btn-large', icone: ICONE_COCHE });
@@ -303,7 +303,11 @@ export function choisirPlace(dDepart, idCarte, surFin, { jourFixe = false } = {}
         // Rien à ce moment-là : avant la première activité d'un moment plus tard (sinon à la fin).
         const ip = PERIODES.findIndex((x) => x.id === moment);
         const ensuite = deroulement(jour).items.find((it) => PERIODES.findIndex((x) => x.id === it.periode) > ip);
-        liste.append(caseIci(ensuite ? { avant: ensuite.act.id } : { fin: true }, 'ここ'));
+        // Elle reçoit l'heure du début de ce moment (ou maintenant, s'il est commencé) : sans heure, elle
+        // était rangée et calculée avec le moment d'avant.
+        const pm = PERIODES[ip];
+        const depart = Math.min(23 * 60 + 45, Math.max(pm.debut, auj() ? Math.ceil(minutesMaintenant() / 15) * 15 : pm.debut));
+        liste.append(caseIci({ ...(ensuite ? { avant: ensuite.act.id } : { fin: true }), heureMoment: depart }, 'ここ'));
       }
       items.forEach((it, k) => {
         if (k === 0 && it.statut !== 'maintenant') liste.append(caseIci({ avant: it.act.id }, `${nomLu(it.carte)}の まえ`));

@@ -27,7 +27,7 @@
   --dimanche: #c4261d;
   --samedi: #1f5fbf;
   --part: rgba(232, 80, 52, .78);
-  --part-longue: rgba(232, 80, 52, .32);
+  --part-longue: rgba(232, 80, 52, .45);
   --police: "BIZ UDPGothic", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", "Noto Sans JP", system-ui, sans-serif;
   --emoji: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
   --rayon: 18px;
@@ -280,7 +280,8 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .horloge { width: 128px; height: 128px; flex: none; }
 .h-fond { fill: var(--surface); stroke: var(--encre); stroke-width: 4; }
 .h-part { fill: var(--part); }
-.h-part-longue { fill: var(--part-longue); }
+/* Plus d'une heure : part plus pâle, mais bordée d'un trait pour rester visible sans la couleur. */
+.h-part-longue { fill: var(--part-longue); stroke: var(--part); stroke-width: 1.5; }
 .h-grad { stroke: var(--encre-douce); stroke-width: 1.5; }
 .h-grad-g { stroke: var(--encre); stroke-width: 3.5; }
 .h-repere { stroke: var(--danger); stroke-width: 7; stroke-linecap: round; }
@@ -413,7 +414,9 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .sem-date { font-size: .82em; color: var(--encre-douce); }
 .sem-auj { font-size: .7em; font-weight: 700; color: var(--action); }
 .sem-corps { min-width: 0; padding: 8px 8px 8px 0; display: flex; flex-direction: column; gap: 6px; }
-.barre-lieux { position: relative; height: 44px; border-radius: 10px; background: var(--papier); border: 2px solid var(--ligne); overflow: hidden; }
+.barre-lieux { position: relative; height: 48px; border-radius: 10px; background: var(--papier); border: 2px solid var(--ligne); overflow: hidden; }
+/* Un bloc étroit (le matin à la maison, 13 px sur téléphone) : voir .bloc.bloc-etroit plus bas, sa zone de toucher
+   s'élargit par des bords transparents, sans changer l'échelle des heures. */
 .bloc {
   position: absolute;
   top: 0;
@@ -432,6 +435,7 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 }
 .bloc i { font-size: 1.25em; line-height: 1; filter: drop-shadow(0 0 2px rgba(0, 0, 0, .25)); }
 .bloc-etroit i { display: none; }
+.bloc.bloc-etroit { z-index: 1; box-sizing: content-box; margin-left: -15px; padding: 0; border: 0; border-inline: 15px solid transparent; background-clip: padding-box; }
 .bloc-nom { display: none; font-weight: 700; font-size: .85em; white-space: nowrap; }
 .tic { position: absolute; top: 0; bottom: 0; border-left: 2px dashed var(--bord); opacity: .5; pointer-events: none; z-index: 1; }
 .ligne-maintenant { position: absolute; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: var(--danger); z-index: 2; pointer-events: none; box-shadow: 0 0 0 1px var(--surface); }
@@ -557,8 +561,8 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 }
 .mois-jour.ferie { color: var(--dimanche); }
 .mois-jour.sans-ecole { background: var(--papier); }
-.mois-jour.hors-mois { opacity: .35; }
-.mois-jour.passe:not(.aujourdhui) .mj-num, .mois-jour.passe:not(.aujourdhui) .mj-marques { opacity: .6; }
+.mois-jour.hors-mois { opacity: .55; }
+.mois-jour.passe:not(.aujourdhui) .mj-num, .mois-jour.passe:not(.aujourdhui) .mj-marques { opacity: .75; }
 .mois-jour.aujourdhui { border: 4px solid var(--action); }
 .mj-num { font-size: 1.2em; font-weight: 700; line-height: 1.1; }
 /* Les icônes : 2 par ligne sur téléphone (jusqu'à 4), avec le nom sur grand écran. */
