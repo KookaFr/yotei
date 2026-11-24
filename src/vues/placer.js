@@ -9,7 +9,7 @@
 
 import { carte, estCadreLibre, estLoisir } from '../donnees.js';
 import {
-  affichageHeure, ajouterJours, aujourdhui, cle, minutesMaintenant, versTexte,
+  affichageHeure, ajouterJours, aujourdhui, cle, JOURS_SEMAINE, minutesMaintenant, versTexte,
 } from '../heure.js';
 import { deroulement, periodeDe, PERIODES } from '../journee.js';
 import { el } from '../outils.js';
@@ -25,7 +25,8 @@ import { nomJour } from '../choix-carte.js';
 
 // surFin({ date, apres, avant, debut, dans, texte }) : apres / avant = id d'une activité ; debut = 'HH:MM' ou '' ;
 // dans = id d'un 自由時間 où ranger le loisir.
-export function choisirPlace(dDepart, idCarte, surFin) {
+// jourFixe : la date est déjà choisie (depuis le calendrier du mois) ; on ne montre pas les jours.
+export function choisirPlace(dDepart, idCarte, surFin, { jourFixe = false } = {}) {
   const c = carte(idCarte);
   let jour = dDepart;
   let moment = null;
@@ -65,27 +66,32 @@ export function choisirPlace(dDepart, idCarte, surFin) {
     contenu.replaceChildren();
     contenu.append(el('div', { class: `placer-carte lieu-${c.lieu}`, html: `${visuel(c, 'grand')}<span class="placer-nom">${nomHtml(c)}</span>` }));
 
-    // Le jour.
-    contenu.append(el('p', { class: 'cq-label', 'data-lire': 'いつ？', html: html('いつ？') }));
-    const jours = el('div', { class: 'cq-chips' });
-    for (let k = 0; k < 7; k++) {
-      const d = ajouterJours(aujourdhui(), k);
-      const b = el('button', {
-        type: 'button', class: `chip jour-${d.getDay()}${cle(d) === cle(jour) ? ' chip-on' : ''}`, 'aria-pressed': String(cle(d) === cle(jour)),
-        'aria-label': lu(nomJour(d)), html: `${html(nomJour(d, true), { mots: false })}<small>${d.getMonth() + 1}/${d.getDate()}</small>`,
-      });
-      activable(b, () => {
-        jour = d;
-        if (!momentsPossibles().some((p) => p.id === moment)) moment = null;
-        place = null;
-        dans = null;
-        autre = false;
-        dessiner();
-        parler(lu(nomJour(d)));
-      }, { garde: false });
-      jours.append(b);
+    // Le jour (sauf si la date est déjà choisie).
+    if (jourFixe) {
+      const t = `${jour.getMonth() + 1}がつ ${jour.getDate()}にち（${JOURS_SEMAINE[jour.getDay()].court}）`;
+      contenu.append(el('p', { class: `placer-date jour-${jour.getDay()}`, 'data-lire': lu(t), html: html(t, { mots: false }) }));
+    } else {
+      contenu.append(el('p', { class: 'cq-label', 'data-lire': 'いつ？', html: html('いつ？') }));
+      const jours = el('div', { class: 'cq-chips' });
+      for (let k = 0; k < 7; k++) {
+        const d = ajouterJours(aujourdhui(), k);
+        const b = el('button', {
+          type: 'button', class: `chip jour-${d.getDay()}${cle(d) === cle(jour) ? ' chip-on' : ''}`, 'aria-pressed': String(cle(d) === cle(jour)),
+          'aria-label': lu(nomJour(d)), html: `${html(nomJour(d, true), { mots: false })}<small>${d.getMonth() + 1}/${d.getDate()}</small>`,
+        });
+        activable(b, () => {
+          jour = d;
+          if (!momentsPossibles().some((p) => p.id === moment)) moment = null;
+          place = null;
+          dans = null;
+          autre = false;
+          dessiner();
+          parler(lu(nomJour(d)));
+        }, { garde: false });
+        jours.append(b);
+      }
+      contenu.append(jours);
     }
-    contenu.append(jours);
 
     // Un loisir : d'abord les 自由時間 du jour.
     const libres = cadres();

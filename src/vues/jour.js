@@ -666,25 +666,30 @@ function oublierFait(d, it) {
 /* ----- L'élève change sa journée ----- */
 
 function ajouter(d) {
-  // D'abord quoi (la carte), puis quand et où (「いつ する？」).
+  ajouterAuJour(d);
+}
+
+// Ajouter une activité : d'abord quoi (la carte), puis quand et où (「いつ する？」).
+// jourFixe : la date est déjà choisie (calendrier du mois) ; apres(date, idCarte) remplace l'affichage qui suit.
+export function ajouterAuJour(d, { jourFixe = false, apres = null } = {}) {
+  const titre = jourFixe ? `${d.getMonth() + 1}がつ ${d.getDate()}にちに 何《なに》を 入《い》れる？` : '何《なに》を 入《い》れる？';
   choisirCarte({
-    titre: '何《なに》を 入《い》れる？', texteOk: 'つぎ',
-    surChoix: (idCarte) => choisirPlace(d, idCarte, ({ date, apres, avant, debut, dans, texte }) => {
+    titre, texteOk: 'つぎ',
+    surChoix: (idCarte) => choisirPlace(d, idCarte, ({ date, apres: placeApres, avant, debut, dans, texte }) => {
       sons.succes();
       if (dans) {
         // Un loisir rangé dans un 自由時間 : il n'a pas d'heure à lui.
         mettreDansLibre(date, dans, idCarte);
         parler(`${nomLu(carte(idCarte))}を ${lu(texte)}に いれたよ。`);
-        if (cle(date) !== cle(d)) message(`${texte}に 入《い》れたよ。`);
-        nav.rafraichir();
-        if (cle(date) === cle(d)) montrerActivite(dans, { briller: true });
-        return;
+      } else {
+        inserer(date, idCarte, { apres: placeApres, avant, debut });
+        parler(`${nomLu(carte(idCarte))}を ${lu(texte)}の よていに いれたよ。`);
       }
-      inserer(date, idCarte, { apres, avant, debut });
-      parler(`${nomLu(carte(idCarte))}を ${lu(texte)}の よていに いれたよ。`);
-      if (cle(date) !== cle(d)) message(`${texte}の 予定《よてい》に 入《い》れたよ。`);
+      if (apres) { apres(date, idCarte); return; }
+      if (cle(date) !== cle(d)) message(dans ? `${texte}に 入《い》れたよ。` : `${texte}の 予定《よてい》に 入《い》れたよ。`);
       nav.rafraichir();
-    }),
+      if (dans && cle(date) === cle(d)) montrerActivite(dans, { briller: true });
+    }, { jourFixe }),
   });
 }
 

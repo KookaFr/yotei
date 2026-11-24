@@ -24,6 +24,8 @@ export function nomJour(d, court = false) {
   if (n === 0) return '今日《きょう》';
   if (n === 1) return '明日《あした》';
   if (n === 2) return 'あさって';
+  // Plus loin (depuis le calendrier du mois) : la date.
+  if (n < 0 || n >= 7) return `${d.getMonth() + 1}がつ ${d.getDate()}にち`;
   return JOURS_SEMAINE[d.getDay()][court ? 'court' : 'long'];
 }
 

@@ -115,6 +115,28 @@ const reglesLues = (page) => page.evaluate(() => {
             await page.keyboard.press('Escape');
             await page.locator('.chip', { hasText: 'かんたん' }).click();
           }
+          if (i === 2) {
+            // こんげつ : un jour à venir, 「＋ よていを いれる」, choisir びょういん, le moment, la première place.
+            const futur = page.locator('.mois-jour:not(.passe):not(.hors-mois):not(.aujourdhui)').last();
+            if (await futur.count()) {
+              await futur.click();
+              await page.waitForTimeout(200);
+              await verifier('こんげつ jour');
+              await page.locator('.actions-feuille .btn', { hasText: 'いれる' }).click();
+              await page.waitForTimeout(200);
+              await page.locator('.choix-onglet').nth(2).click();
+              await page.locator('.tuile-carte', { hasText: 'びょういん' }).click();
+              await page.locator('.choix-pied .btn').click();
+              await page.waitForTimeout(200);
+              await page.locator('.placer .chip').first().click();
+              await page.locator('.placer .place').first().click();
+              await verifier('こんげつ いれる');
+              await page.locator('.placer .choix-pied .btn').click();
+              await page.waitForTimeout(900);
+              if (!(await page.locator('.detail-evs li', { hasText: 'びょういん' }).count())) problemes.push(`${nom} ${moment} : びょういん absent du jour (こんげつ)`);
+              await page.keyboard.press('Escape');
+            }
+          }
         }
         await page.locator('.onglet').first().click();
         // Retour de l'école : les premières questions.
@@ -134,6 +156,7 @@ const reglesLues = (page) => page.evaluate(() => {
           await page.waitForTimeout(200);
           await verifier('いれる');
           // Ranger テレビ dans un 自由時間 (si ce jour-là en a encore un).
+          await page.locator('.choix-onglet').nth(1).click();
           await page.locator('.tuile-carte', { hasText: 'テレビ' }).click();
           await page.locator('.choix-pied .btn').click();
           await page.waitForTimeout(150);
@@ -148,6 +171,7 @@ const reglesLues = (page) => page.evaluate(() => {
           // Ajouter ゲーム à la fin du soir (「べつの じかん」), puis la déplacer dans la liste (mode 「うごかす」).
           await ajout.click();
           await page.waitForTimeout(200);
+          await page.locator('.choix-onglet').nth(1).click();
           await page.locator('.tuile-carte', { hasText: 'ゲーム' }).click();
           await page.locator('.choix-pied .btn').click();
           await page.waitForTimeout(150);

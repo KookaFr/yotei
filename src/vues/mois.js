@@ -3,34 +3,46 @@
    les jours fériés, les événements, et « あと 3にち » pour les prochains.
    Dans chaque jour, en icônes, ce qu'il ne faut pas oublier : jour férié (🎌), événements du calendrier,
    activités marquées « importantes » (遠足, 実習, 病院…) — pas les activités ordinaires.
-   Toucher un jour : ce qui s'y passe, et son programme (ou sa ふりかえり s'il est passé).
+   Toucher un jour : ce qui s'y passe, 「＋ よていを いれる」 (sans passer par la page du jour ; ✕ pour enlever ce
+   que l'élève a ajouté), et son programme (ou sa ふりかえり s'il est passé).
    ====================================================================== */
 
 import {
-  carte, journalDu, joursAvecPhotos, programmeDu, prochainsEvenements, sorteDuJour,
+  carte, etat, journalDu, joursAvecPhotos, modeleHabituel, modifierJour, programmeDu, prochainsEvenements, retablirJour, sorteDuJour,
 } from '../donnees.js';
 import {
   ajouterJours, aujourdhui, cle, deCle, ecartJours, JOURS_SEMAINE, texteDans, versMinutes, yomiDans, yomiDate, yomiMois,
 } from '../heure.js';
 import { nav } from '../nav.js';
 import { el } from '../outils.js';
+import { reglages } from '../reglages.js';
 import { activable } from '../tactile.js';
 import { html, lu } from '../texte.js';
 import {
-  bouton, fermerFeuille, heureHtml, heureLue, ICONE_DROITE, ICONE_GAUCHE, ICONE_PHOTO, ouvrirFeuille, visuel,
+  bouton, fermerFeuille, heureHtml, heureLue, ICONE_DROITE, ICONE_FERMER, ICONE_GAUCHE, ICONE_PHOTO, ICONE_PLUS, nomLu, ouvrirFeuille, visuel,
 } from '../ui.js';
+import { parler, sons } from '../voix.js';
+import { ajouterAuJour } from './jour.js';
+
+const peutAjouter = () => reglages.eleve === 'ajouter' || reglages.eleve === 'deplacer';
 
 let decalage = 0;
 
-// Ce qu'il ne faut pas oublier ce jour-là (dans l'ordre : férié, événements, activités importantes).
+// Ce qu'il ne faut pas oublier ce jour-là (dans l'ordre : férié, événements, activités importantes, puis ce qui a été
+// ajouté pour cette date seulement). Pas les activités ordinaires de la semaine type.
 function marquesDu(d, { ferie, evenements }) {
   const res = [];
   if (ferie) res.push({ emoji: '🎌', nom: ferie, sorte: 'ferie' });
   evenements.forEach((ev) => res.push({ emoji: ev.emoji || '⭐', nom: ev.nom, sorte: ev.sansEcole ? 'vacances' : 'evenement' }));
+  const habituels = etat.jours[cle(d)] ? new Set(modeleHabituel(d).map((a) => a.id)) : null;
   programmeDu(d).forEach((a) => {
     const c = carte(a.carte);
-    if (!c.important || res.some((x) => x.nom === c.nom)) return;
-    res.push({ emoji: c.emoji || '⭐', nom: c.nom, sorte: 'activite', debut: versMinutes(a.debut), carte: c });
+    const ajout = Boolean(a.parEleve) || (habituels && !habituels.has(a.id));
+    if (!c.important && !ajout) return;
+    if (!ajout && res.some((x) => x.nom === c.nom)) return;
+    res.push({
+      emoji: c.emoji || '⭐', nom: c.nom, sorte: c.important ? 'activite' : 'ajout', debut: versMinutes(a.debut), carte: c, act: a,
+    });
   });
   return res;
 }
@@ -93,7 +105,7 @@ export function rendreMois(conteneur) {
     const montrees = marques.length > MAX_ICONES ? marques.slice(0, MAX_ICONES - 1) : marques;
     const reste = marques.length - montrees.length;
     const b = el('button', {
-      type: 'button', class: classes.join(' '),
+      type: 'button', class: classes.join(' '), 'data-date': k,
       'aria-label': `${yomiDate(d)}${marques.map((m) => `、 ${lu(m.nom)}`).join('')}`,
       html: `<span class="mj-num">${d.getDate()}</span>`
         + `<span class="mj-marques mj-n${Math.min(3, montrees.length + (reste ? 1 : 0))}">${montrees.map((m) => `<span class="mj-m mj-${m.sorte}"><i aria-hidden="true">${m.emoji}</i>`
@@ -111,29 +123,64 @@ export function rendreMois(conteneur) {
 function ouvrirDate(d) {
   const contenu = el('div', { class: 'detail-date' });
   const marques = marquesDu(d, sorteDuJour(d));
+  const k = cle(d);
+  const passe = k < cle(aujourdhui());
   if (marques.length) {
     const ul = el('ul', { class: 'detail-evs' });
     marques.forEach((m) => {
       const heure = m.debut !== null && m.debut !== undefined;
-      ul.append(el('li', {
+      const li = el('li', {
         class: `de-${m.sorte}${m.carte ? ` lieu-${m.carte.lieu}` : ''}`, 'data-lire': `${lu(m.nom)}${heure ? `。 ${heureLue(m.debut)}から` : ''}`,
         html: `${m.carte ? visuel(m.carte) : `<span class="de-emoji" aria-hidden="true">${m.emoji}</span>`}<span class="de-nom">${html(m.nom)}</span>`
           + `${heure ? `<span class="de-heure">${heureHtml(m.debut)}</span>` : ''}`,
-      }));
+      });
+      // Ce que l'élève a ajouté : ✕ pour l'enlever.
+      if (m.act && m.act.parEleve && !passe && peutAjouter()) {
+        li.append(bouton(`${lu(m.nom)}を けす`, () => enleverDe(d, m), { classe: 'btn-rond btn-mini-rond de-enlever', icone: ICONE_FERMER }));
+      }
+      ul.append(li);
     });
     contenu.append(ul);
+  } else {
+    contenu.append(el('p', { class: 'p-aide de-vide', 'data-lire': 'とくべつな よていは ないよ。', html: html('とくべつな 予定《よてい》は ないよ。') }));
   }
   const lignes = marques.map((m) => ({ t: m.nom }));
-  const k = cle(d);
-  const passe = k < cle(aujourdhui());
   const actions = el('div', { class: 'actions-feuille' });
-  actions.append(bouton(passe ? 'この 日《ひ》に した こと' : '予定《よてい》を 見《み》る', () => { fermerFeuille(); nav.jour(d); }, { classe: 'btn btn-principal' }));
+  if (!passe && peutAjouter()) {
+    actions.append(bouton('予定《よてい》を 入《い》れる', () => {
+      fermerFeuille();
+      ajouterAuJour(d, { jourFixe: true, apres: (date) => apresAjout(date) });
+    }, { classe: 'btn btn-principal', icone: ICONE_PLUS }));
+  }
+  actions.append(bouton(passe ? 'この 日《ひ》に した こと' : '予定《よてい》を 見《み》る', () => { fermerFeuille(); nav.jour(d); }, { classe: passe ? 'btn btn-principal' : 'btn' }));
   if (Object.values(journalDu(d)).some((x) => x.fait)) {
     actions.append(bouton('ふりかえり', () => { fermerFeuille(); nav.recit(d); }, { classe: 'btn', icone: ICONE_PHOTO }));
   }
   contenu.append(actions);
   const lire = `${yomiDate(d)}。 ${lignes.map((l) => lu(l.t)).join('。 ')}`;
   ouvrirFeuille({ titre: dateHtmlTexte(d), contenu, lire });
+}
+
+// Après un ajout : le mois se redessine, le jour brille, et sa fenêtre revient (pour en ajouter un autre).
+function apresAjout(d) {
+  nav.rafraichir();
+  const caseJour = document.querySelector(`.mois-jour[data-date="${cle(d)}"]`);
+  if (caseJour) caseJour.classList.add('vient-de-bouger');
+  setTimeout(() => ouvrirDate(d), 650);
+}
+
+function enleverDe(d, m) {
+  modifierJour(d, (liste) => {
+    const i = liste.findIndex((a) => a.id === m.act.id);
+    if (i >= 0) liste.splice(i, 1);
+  });
+  // Revenu au programme habituel : la date n'est plus « modifiée ».
+  if (JSON.stringify(etat.jours[cle(d)]) === JSON.stringify(modeleHabituel(d))) retablirJour(d);
+  sons.succes();
+  parler(`${nomLu(m.carte)}を けしたよ。`);
+  fermerFeuille();
+  nav.rafraichir();
+  ouvrirDate(d);
 }
 
 const dateHtmlTexte = (d) => `${d.getMonth() + 1}がつ ${d.getDate()}にち（${JOURS_SEMAINE[d.getDay()].court}）`;

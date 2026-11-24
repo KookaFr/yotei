@@ -709,6 +709,10 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .de-nom { flex: 1; min-width: 0; }
 .de-heure { color: var(--encre-douce); font-size: .85em; white-space: nowrap; }
 .de-ferie { --lieu: var(--dimanche); color: var(--dimanche); }
+.de-enlever { flex: none; }
+.de-vide { margin: 0 0 6px; }
+.mois-jour.vient-de-bouger { animation: briller 1.6s ease-out 1; }
+.placer-date { margin: 0; text-align: center; font-size: 1.3em; font-weight: 700; color: var(--jour, var(--encre)); }
 
 /* Choisir une carte */
 .choix-carte { display: flex; flex-direction: column; gap: 10px; }
@@ -1125,3 +1129,4 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .verif-nuit .verif-emoji { font-family: var(--emoji); }
 .m-demain { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; margin: 4px 0 0; font-size: 1.1em; }
 .m-demain .visuel { font-size: 1.4em; }
+[data-motion="reduce"] .mois-jour.vient-de-bouger { animation: none; outline: 4px solid var(--action); }
