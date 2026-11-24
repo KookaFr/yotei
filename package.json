@@ -2,6 +2,7 @@
   "name": "yotei",
   "version": "1.0.0",
   "private": true,
+  "license": "PolyForm-Noncommercial-1.0.0",
   "description": "よてい — emploi du temps visuel (journée, semaine, mois, étapes, ふりかえり)",
   "scripts": {
     "test": "node tests/fumee.js",

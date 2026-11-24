@@ -1007,3 +1007,6 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .placer-heure-valeur small { font-size: .5em; color: var(--encre-douce); }
 .placer-heure .p-aide { width: 100%; margin: 0; }
 .places-heure { opacity: .45; }
+
+/* Licence, en bas de l'espace parents */
+.p-mention { margin: 24px auto 8px; text-align: center; font-size: .85em; color: var(--encre-douce); }

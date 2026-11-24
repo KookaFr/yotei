@@ -81,6 +81,11 @@ export function rendreParents() {
     section('reglages', L('Réglages', 'せってい'), blocReglages()),
     section('sauvegarde', L('Sauvegarde, autre appareil', 'バックアップ・ほかの 機器へ'), blocSauvegarde()),
   );
+  // La licence : usage non commercial (LICENSE.md).
+  corps.append(el('p', { class: 'p-mention', text: L(
+    '© 2026 KookaFr · Utilisation non commerciale seulement (licence PolyForm Noncommercial 1.0.0)',
+    '© 2026 KookaFr ・ 非営利の利用のみ（PolyForm Noncommercial 1.0.0）',
+  ) }));
   chargerPhotos(corps);
   corps.scrollTop = haut;
 }

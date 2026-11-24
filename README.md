@@ -76,3 +76,14 @@ npm test                 # 5 formats × 3 moments de la journée, parcours compr
 npm run version-sw 2     # avant chaque mise en ligne
 python3 outils/police.py # après avoir ajouté des kanji (pip install fonttools brotli)
 ```
+
+## Licence
+
+© 2026 KookaFr. Ce logiciel est distribué sous la licence **PolyForm Noncommercial 1.0.0** (texte complet : `LICENSE.md`).
+
+- **Permis, gratuitement** : l'usage personnel et familial ; l'usage par les écoles, associations, organismes publics, de santé ou de recherche, même financés.
+- **Permis** : modifier le code et le partager pour un usage non commercial, en gardant cette licence et la ligne « Required Notice ».
+- **Interdit sans accord écrit** : tout usage commercial (vente, intégration dans un produit ou un service payant…).
+- Les polices BIZ UDPGothic (`polices/`) ne sont pas concernées : elles restent sous licence SIL Open Font License 1.1.
+
+日本語：© 2026 KookaFr。個人・家庭、学校・福祉団体・公的機関などの非営利の利用は無料で自由です（改変・共有も、このライセンスを付ければ可）。営利目的の利用（販売、有料の製品やサービスへの組み込みなど）は、書面の許可なしには禁止します。全文は LICENSE.md（PolyForm Noncommercial 1.0.0）。フォント（BIZ UDPゴシック）は SIL Open Font License 1.1 のままです。
