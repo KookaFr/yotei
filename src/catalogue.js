@@ -94,6 +94,17 @@ export const CARTES = [
   c('byoin', 'soto', '🏥', '病院《びょういん》', '病院《びょういん》に 行《い》きました。', { sansPhoto: true, important: true, mochimono: [m('💳', '保険証《ほけんしょう》'), m('📕', 'お薬《くすり》手帳《てちょう》')] }),
   c('gaishoku', 'soto', '🍽️', '外食《がいしょく》', 'お店《みせ》で 食《た》べました。'),
   c('tomodachi', 'soto', '🤝', '友《とも》だちと 遊《あそ》ぶ', '友《とも》だちと 遊《あそ》びました。', { libre: true }),
+  // 「だれと？」 : la personne se choisit en ajoutant (パパと すごす, けんたくんと すごす…).
+  c('sugosu', 'soto', '👥', 'だれかと すごす', 'だれかと すごしました。', { important: true, avecQui: true }),
+];
+
+/* ----- Les personnes autour de lui (「だれと？」) : les parents les changent, il peut en ajouter ----- */
+const pers = (id, emoji, nom) => ({ id, emoji, nom });
+export const PERSONNES = [
+  pers('papa', '👨', 'パパ'), pers('mama', '👩', 'ママ'),
+  pers('jiji', '👴', 'おじいちゃん'), pers('baba', '👵', 'おばあちゃん'),
+  pers('ani', '👦', 'お兄《にい》ちゃん'), pers('ane', '👧', 'お姉《ねえ》ちゃん'),
+  pers('tomo', '🧑', '友《とも》だち'), pers('sensei', '🧑‍🏫', '先生《せんせい》'),
 ];
 
 /* ----- Les étapes (une à la fois) ----- */

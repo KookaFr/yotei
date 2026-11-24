@@ -7,11 +7,15 @@
    「べつの じかん」 garde le choix de la place (émission à heure fixe, jour sans temps libre).
    ====================================================================== */
 
-import { carte, estCadreLibre, estLoisir } from '../donnees.js';
+import {
+  ajouterPersonne, carte, carteDe, estCadreLibre, estLoisir, etat,
+} from '../donnees.js';
 import {
   affichageHeure, ajouterJours, aujourdhui, cle, JOURS_SEMAINE, minutesMaintenant, versTexte,
 } from '../heure.js';
-import { deroulement, periodeDe, PERIODES } from '../journee.js';
+import {
+  activitesEntre, deroulement, periodeDe, PERIODES,
+} from '../journee.js';
 import { el } from '../outils.js';
 import { reglages } from '../reglages.js';
 import { chargerPhotos } from '../photos.js';
@@ -32,8 +36,12 @@ export function choisirPlace(dDepart, idCarte, surFin, { jourFixe = false } = {}
   let moment = null;
   let place = null;        // { apres } | { avant } | { fin: true }
   let heure = null;        // minutes, ou null (sans heure)
+  let fin = null;          // minutes : heure de fin (activité longue), ou null
   let dans = null;         // id du 自由時間 choisi (loisir)
   let autre = false;       // 「べつの じかん」 : choisir une place comme pour une autre activité
+  let avec = [];           // ids des personnes (「だれと？」)
+  let voirAvec = Boolean(carte(idCarte).avecQui);   // obligatoire pour 「だれかと すごす」, sinon sur demande
+  let nouvelle = false;    // le petit formulaire 「ほかの 人」
   const contenu = el('div', { class: 'placer' });
   const loisir = estLoisir(c);
 
@@ -59,12 +67,35 @@ export function choisirPlace(dDepart, idCarte, surFin, { jourFixe = false } = {}
     } else moment = periodeDe(minutesMaintenant()).id;
   }
 
+  // Les heures rondes, à toucher (une rangée qui défile) : 「ごご 6:00」.
+  const puces = (valeur, min, choisir) => {
+    const rangee = el('div', { class: 'cq-chips puces-heures' });
+    for (let h = Math.ceil(min / 60); h <= 23; h++) {
+      const on = Math.floor(valeur / 60) === h;
+      const b = el('button', {
+        type: 'button', class: `chip${on ? ' chip-on' : ''}`, 'aria-pressed': String(on), 'aria-label': heureLue(h * 60), html: heureHtml(h * 60),
+      });
+      activable(b, () => choisir(h * 60), { garde: false });
+      rangee.append(b);
+    }
+    return rangee;
+  };
+  const reglage = (valeur, choisir, lire) => el('div', { class: 'placer-reglage' },
+    bouton('15ふん まえ', () => choisir(valeur - 15), { classe: 'btn-rond', icone: '<b aria-hidden="true">−</b>' }),
+    el('span', { class: 'placer-heure-valeur', 'data-lire': `${lire} ${heureLue(valeur)}`, html: `${heureHtml(valeur)}<small>${heureLue(valeur)}</small>` }),
+    bouton('15ふん あと', () => choisir(valeur + 15), { classe: 'btn-rond', icone: '<b aria-hidden="true">＋</b>' }));
+
   const fantome = () => el('span', { class: `place-fantome lieu-${c.lieu}`, html: `${visuel(c)}<span>${nomHtml(c)}</span>${heure !== null ? `<small>${heureHtml(heure)}</small>` : ''}` });
   const memePlace = (p) => place && p && ((p.apres && p.apres === place.apres) || (p.avant && p.avant === place.avant) || (p.fin && place.fin));
 
   function dessiner() {
     contenu.replaceChildren();
-    contenu.append(el('div', { class: `placer-carte lieu-${c.lieu}`, html: `${visuel(c, 'grand')}<span class="placer-nom">${nomHtml(c)}</span>` }));
+    const ce = carteDe({ carte: idCarte, avec });
+    contenu.append(el('div', {
+      class: `placer-carte lieu-${c.lieu}`,
+      html: `${visuel(ce, 'grand')}<span class="placer-nom">${nomHtml(ce)}${!c.avecQui && ce.avec ? `<small class="placer-avec">${html(`${ce.avec.map((x) => x.nom).join('と ')}と`)}</small>` : ''}</span>`,
+    }));
+    dessinerAvec();
 
     // Le jour (sauf si la date est déjà choisie).
     if (jourFixe) {
@@ -131,26 +162,81 @@ export function choisirPlace(dDepart, idCarte, surFin, { jourFixe = false } = {}
 
     // Valider.
     const cadre = dans ? libres.find((it) => it.act.id === dans) : null;
-    const pret = cadre || (modePlace && (heure !== null || place));
+    const manqueQui = c.avecQui && !avec.length;
+    const pret = !manqueQui && (cadre || (modePlace && (heure !== null || place)));
     const enChiffres = (m) => { const a = affichageHeure(m, reglages.format24); return `${a.moment ? `${a.moment} ` : ''}${a.chiffres}`; };
-    let texte = heure !== null ? `${enChiffres(heure)}に 入《い》れる` : (place ? 'ここに 入《い》れる' : 'どこに 入《い》れる？');
+    let texte = heure !== null ? `${enChiffres(heure)}${fin !== null ? `〜${enChiffres(fin)}` : ''}に 入《い》れる` : (place ? 'ここに 入《い》れる' : 'どこに 入《い》れる？');
     if (cadre) texte = `${cadre.carte.nom}に 入《い》れる`;
     else if (!modePlace) texte = 'どれに 入《い》れる？';
+    if (manqueQui) texte = 'だれと？';
     const ok = bouton(texte, () => {
       if (!pret) return;
       fermerFeuille();
       if (cadre) {
-        surFin({ date: jour, dans: cadre.act.id, texte: `${nomJour(jour)}の ${cadre.carte.nom}` });
+        surFin({ date: jour, dans: cadre.act.id, avec, texte: `${nomJour(jour)}の ${cadre.carte.nom}` });
         return;
       }
-      const nom = heure !== null ? `${nomJour(jour)}の ${heureLue(heure)}` : `${nomJour(jour)}`;
+      const nom = heure !== null ? `${nomJour(jour)}の ${heureLue(heure)}${fin !== null ? `から ${heureLue(fin)}まで` : ''}` : `${nomJour(jour)}`;
       surFin({
-        date: jour, apres: place && place.apres, avant: place && place.avant, debut: heure !== null ? versTexte(heure) : '', texte: nom,
+        date: jour, apres: place && place.apres, avant: place && place.avant, debut: heure !== null ? versTexte(heure) : '',
+        fin: heure !== null && fin !== null ? versTexte(fin) : '', avec, texte: nom,
       });
     }, { classe: 'btn btn-principal btn-large', icone: ICONE_COCHE });
     ok.disabled = !pret;
     contenu.append(el('div', { class: 'choix-pied' }, ok));
     chargerPhotos(contenu);
+    centrer();
+  }
+
+  // 「だれと？」 : les personnes autour de lui (plusieurs possibles), et 「ほかの 人」 pour écrire un prénom.
+  function dessinerAvec() {
+    if (!voirAvec) {
+      contenu.append(bouton('だれと？', () => { voirAvec = true; dessiner(); parler('だれと する？'); }, { classe: 'btn btn-petit placer-qui', icone: '<i aria-hidden="true">👥</i>' }));
+      return;
+    }
+    contenu.append(el('p', { class: 'cq-label', 'data-lire': 'だれと？', html: html('だれと？') }));
+    const rangee = el('div', { class: 'personnes' });
+    etat.personnes.forEach((p) => {
+      const on = avec.includes(p.id);
+      const b = el('button', {
+        type: 'button', class: `personne${on ? ' choisie' : ''}`, 'aria-pressed': String(on), 'aria-label': lu(p.nom),
+        html: `${visuel(p)}<span>${html(p.nom)}</span>`,
+      });
+      activable(b, () => {
+        avec = on ? avec.filter((x) => x !== p.id) : [...avec, p.id];
+        dessiner();
+        parler(on ? `${lu(p.nom)}は やめる` : `${lu(p.nom)}と`);
+      }, { garde: false });
+      rangee.append(b);
+    });
+    const plus = el('button', { type: 'button', class: 'personne personne-plus', 'aria-label': 'ほかの ひと', html: `<b aria-hidden="true">＋</b><span>${html('ほかの 人《ひと》')}</span>` });
+    activable(plus, () => { nouvelle = !nouvelle; dessiner(); if (nouvelle) parler('なまえを かいてね。'); }, { garde: false });
+    rangee.append(plus);
+    contenu.append(rangee);
+    if (nouvelle) {
+      // Écrire un prénom (et choisir une image) : il est gardé dans la liste pour la prochaine fois.
+      const form = el('div', { class: 'personne-form' });
+      const champ = el('input', { type: 'text', class: 'personne-nom', placeholder: 'なまえ', maxlength: '20', 'aria-label': 'なまえ' });
+      let emoji = '🙂';
+      const emojis = el('div', { class: 'personne-emojis' });
+      ['🙂', '👦', '👧', '🧒', '👨', '👩', '👴', '👵', '🧑‍🏫', '🐶'].forEach((e) => {
+        const b = el('button', { type: 'button', class: `chip${e === emoji ? ' chip-on' : ''}`, 'aria-label': e, html: `<i aria-hidden="true">${e}</i>` });
+        b.addEventListener('click', () => { emoji = e; emojis.querySelectorAll('.chip').forEach((x) => x.classList.toggle('chip-on', x === b)); });
+        emojis.append(b);
+      });
+      const ok = bouton('いれる', () => {
+        const nom = champ.value.trim();
+        if (!nom) { champ.focus(); return; }
+        const id = ajouterPersonne(nom, emoji);
+        avec = [...avec, id];
+        nouvelle = false;
+        dessiner();
+        parler(`${nom}と`);
+      }, { classe: 'btn btn-principal btn-petit', icone: ICONE_COCHE });
+      form.append(champ, emojis, ok);
+      contenu.append(form);
+      setTimeout(() => champ.focus(), 50);
+    }
   }
 
   // Le moment, la place entre les activités, l'heure (comme pour toute activité).
@@ -162,7 +248,7 @@ export function choisirPlace(dDepart, idCarte, surFin, { jourFixe = false } = {}
         type: 'button', class: `chip${moment === p.id ? ' chip-on' : ''}`, 'aria-pressed': String(moment === p.id), 'aria-label': lu(p.nom),
         html: `<span aria-hidden="true">${p.emoji}</span>${html(p.nom, { mots: false })}`,
       });
-      activable(b, () => { moment = p.id; place = null; heure = null; dessiner(); parler(lu(p.nom)); }, { garde: false });
+      activable(b, () => { moment = p.id; place = null; heure = null; fin = null; dessiner(); parler(lu(p.nom)); }, { garde: false });
       moments.append(b);
     });
     contenu.append(moments);
@@ -180,7 +266,7 @@ export function choisirPlace(dDepart, idCarte, surFin, { jourFixe = false } = {}
           html: choisie ? '' : `<span aria-hidden="true">＋</span>${html('ここ')}`,
         });
         if (choisie) b.append(fantome());
-        activable(b, () => { place = p; heure = null; dessiner(); parler(`${lire}に いれるね。`); }, { garde: false });
+        activable(b, () => { place = p; heure = null; fin = null; dessiner(); parler(`${lire}に いれるね。`); }, { garde: false });
         li.append(b);
         return li;
       };
@@ -200,7 +286,8 @@ export function choisirPlace(dDepart, idCarte, surFin, { jourFixe = false } = {}
       });
       contenu.append(liste);
 
-      // L'heure, si on veut (par quarts d'heure).
+      // L'heure, si on veut : des heures rondes à toucher (− / ＋ pour les quarts d'heure). Puis, si on veut, la fin
+      // (activité longue : パパと すごす 10:00〜18:00 ; ce qui était prévu pendant ce temps est remplacé).
       const ligneHeure = el('div', { class: 'placer-heure' });
       if (heure === null) {
         ligneHeure.append(bouton('時間《じかん》も きめる', () => {
@@ -211,25 +298,60 @@ export function choisirPlace(dDepart, idCarte, surFin, { jourFixe = false } = {}
           parler(`${heureLue(heure)}。`);
         }, { classe: 'btn', icone: '<i aria-hidden="true">🕐</i>' }));
       } else {
-        const changer = (delta) => {
-          const min = auj() ? Math.ceil(minutesMaintenant() / 15) * 15 : 0;
-          heure = Math.min(23 * 60 + 45, Math.max(min, heure + delta));
+        const minDebut = auj() ? Math.ceil(minutesMaintenant() / 15) * 15 : 6 * 60;
+        const changerDebut = (m) => {
+          heure = Math.min(23 * 60 + 30, Math.max(minDebut, m));
           moment = periodeDe(heure).id;
+          if (fin !== null && fin <= heure) fin = Math.min(23 * 60 + 45, heure + 60);
           dessiner();
           parler(heureLue(heure));
         };
         ligneHeure.append(
-          bouton('15ふん まえ', () => changer(-15), { classe: 'btn-rond', icone: '<b aria-hidden="true">−</b>' }),
-          el('span', { class: 'placer-heure-valeur', 'data-lire': heureLue(heure), html: `${heureHtml(heure)}<small>${heureLue(heure)}</small>` }),
-          bouton('15ふん あと', () => changer(15), { classe: 'btn-rond', icone: '<b aria-hidden="true">＋</b>' }),
-          bouton('時間《じかん》なし', () => { heure = null; dessiner(); }, { classe: 'btn btn-petit' }),
+          el('p', { class: 'cq-label', 'data-lire': 'はじまり', html: html('はじまり') }),
+          puces(heure, minDebut, changerDebut),
+          reglage(heure, changerDebut, 'はじまり'),
+          bouton('時間《じかん》なし', () => { heure = null; fin = null; dessiner(); }, { classe: 'btn btn-petit' }),
         );
+        if (fin === null) {
+          ligneHeure.append(bouton('おわりの 時間《じかん》も きめる', () => {
+            fin = Math.min(23 * 60 + 45, heure + 60);
+            dessiner();
+            parler(`${heureLue(fin)}まで。`);
+          }, { classe: 'btn placer-fin', icone: '<i aria-hidden="true">🏁</i>' }));
+        } else {
+          const changerFin = (m) => {
+            fin = Math.min(23 * 60 + 45, Math.max(heure + 15, m));
+            dessiner();
+            parler(`${heureLue(fin)}まで。`);
+          };
+          ligneHeure.append(
+            el('p', { class: 'cq-label', 'data-lire': 'おわり', html: html('おわり') }),
+            puces(fin, heure + 15, changerFin),
+            reglage(fin, changerFin, 'おわり'),
+            bouton('おわり なし', () => { fin = null; dessiner(); }, { classe: 'btn btn-petit' }),
+          );
+          // Ce qui était prévu pendant ce temps : remplacé.
+          const remplaces = activitesEntre(deroulement(jour).items, heure, fin);
+          if (remplaces.length) {
+            const boite = el('div', { class: 'placer-remplace', 'data-lire': `この あいだの よていは なくなるよ。 ${remplaces.map((it) => nomLu(it.carte)).join('、 ')}` });
+            boite.append(el('p', { html: html('この あいだの 予定《よてい》は なくなるよ：') }));
+            const ul = el('ul', {});
+            remplaces.forEach((it) => ul.append(el('li', { class: `lieu-${it.carte.lieu}`, html: `${visuel(it.carte)}<span>${nomHtml(it.carte)}</span>` })));
+            boite.append(ul);
+            ligneHeure.append(boite);
+          }
+        }
         ligneHeure.append(el('p', { class: 'p-aide', html: html('時間《じかん》の じゅんばんに 入《はい》るよ。') }));
       }
       contenu.append(ligneHeure);
     }
   }
 
+  // Les heures choisies au milieu de leur rangée.
+  const centrer = () => requestAnimationFrame(() => contenu.querySelectorAll('.puces-heures .chip-on').forEach((b) => {
+    const r = b.parentElement;
+    r.scrollLeft = b.offsetLeft - r.offsetLeft - (r.clientWidth - b.offsetWidth) / 2;
+  }));
   dessiner();
   ouvrirFeuille({ titre: 'いつ する？', contenu, classe: 'feuille-haute' });
   parler(`${nomLu(c)}は いつ する？`);

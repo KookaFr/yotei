@@ -4,7 +4,7 @@
    ====================================================================== */
 
 import {
-  CARTES, exempleSemaine, journeeRepos, ROUTINES,
+  CARTES, exempleSemaine, journeeRepos, PERSONNES, ROUTINES,
 } from './catalogue.js';
 import {
   ajouterJours, cle, deCle, ferie, jourIso, versMinutes,
@@ -23,6 +23,7 @@ const nouvelEtat = () => ({
   evenements: [],                  // { id, date, fin, nom, emoji, sansEcole }
   routines: copie(ROUTINES),
   cartes: [],                      // cartes des parents, ou cartes du catalogue modifiées (même id)
+  personnes: copie(PERSONNES),     // 「だれと？」 : { id, nom, emoji, photo }
   exemple: true,                   // l'emploi du temps est encore celui d'exemple
 });
 
@@ -36,6 +37,7 @@ function lire(cleStockage, defaut) {
 }
 
 export let etat = lire(CLE, nouvelEtat);
+if (!etat.personnes) etat.personnes = copie(PERSONNES);   // données d'avant les personnes
 export const journal = lire(CLE_JOURNAL, () => ({}));   // { date: { idActivité: { fait, a, photo, humeur } } }
 
 const ecouteurs = new Set();
@@ -55,6 +57,29 @@ export function remplacerEtat(nouveau) {
 export function reinitialiser() {
   etat = nouvelEtat();
   enregistrer();
+}
+
+/* ----- Les personnes (「だれと？」) ----- */
+export const personne = (id) => etat.personnes.find((x) => x.id === id) || null;
+export function ajouterPersonne(nom, emoji) {
+  const p = { id: uid('p'), nom: nom.trim(), emoji: emoji || '🙂' };
+  etat.personnes.push(p);
+  enregistrer();
+  return p.id;
+}
+// La carte d'une activité, avec les personnes choisies : 「パパと すごす」 (carte « avecQui »),
+// ou la carte telle quelle avec act.avec et une phrase du soir 「パパと 公園に 行きました。」.
+export function carteDe(act) {
+  const base = carte(act.carte);
+  const ps = (act.avec || []).map(personne).filter(Boolean);
+  if (!ps.length) return base;
+  const noms = ps.map((p) => p.nom).join('と ');
+  if (base.avecQui) {
+    return {
+      ...base, nom: `${noms}と すごす`, emoji: ps[0].emoji || base.emoji, photo: ps[0].photo || '', recit: `${noms}と すごしました。`, avec: ps,
+    };
+  }
+  return { ...base, recit: base.recit ? `${noms}と ${base.recit}` : '', avec: ps };
 }
 
 /* ----- Cartes ----- */
@@ -165,6 +190,23 @@ export function changerLoisirs(d, idAct, loisirs) {
     if (!a) return;
     if (loisirs.length) a.loisirs = [...new Set(loisirs)];
     else delete a.loisirs;
+  });
+}
+
+// Enlever une activité ; si elle en remplaçait d'autres (activité longue), elles reviennent à leur place.
+export function enleverActivite(d, idAct) {
+  modifierJour(d, (liste) => {
+    const i = liste.findIndex((x) => x.id === idAct);
+    if (i < 0) return;
+    const [act] = liste.splice(i, 1);
+    if (!act.remplace) return;
+    act.remplace.forEach((r) => {
+      const j = liste.findIndex((x) => x.id === r.act.id);
+      if (j >= 0) { liste[j] = r.act; return; }      // raccourcie : on remet l'original
+      const k = r.apres ? liste.findIndex((x) => x.id === r.apres) : -1;
+      if (k >= 0) liste.splice(k + 1, 0, r.act); else liste.push(r.act);
+    });
+    liste.splice(0, liste.length, ...trierParHeure(liste));
   });
 }
 

@@ -1130,3 +1130,40 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .m-demain { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; margin: 4px 0 0; font-size: 1.1em; }
 .m-demain .visuel { font-size: 1.4em; }
 [data-motion="reduce"] .mois-jour.vient-de-bouger { animation: none; outline: 4px solid var(--action); }
+
+/* 「いつ する？」 : heures rondes à toucher, fin, et ce qui sera remplacé */
+.placer-heure > .cq-label { width: 100%; margin: 4px 0 0; }
+.puces-heures { width: 100%; }
+.puces-heures .chip { flex: none; min-width: 4.8em; }
+.puces-heures .chip span { font-family: inherit; }
+.puces-heures .chip .heure small { display: block; font-size: .6em; line-height: 1; }
+.placer-reglage { display: flex; align-items: center; gap: 10px; }
+.placer-fin i { font-style: normal; font-family: var(--emoji); }
+.placer-remplace { width: 100%; padding: 8px 12px; border: 3px dashed var(--bord); border-radius: 14px; background: var(--papier); }
+.placer-remplace p { margin: 0 0 6px; font-weight: 700; }
+.placer-remplace ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.placer-remplace li { display: flex; align-items: center; gap: 4px; padding: 2px 8px; border-left: 5px solid var(--lieu); border-radius: 8px; background: var(--surface); font-weight: 700; font-size: .9em; opacity: .8; text-decoration: line-through; }
+
+/* 「だれと？」 : les personnes */
+.placer-qui { align-self: flex-start; }
+.placer-qui i { font-style: normal; font-family: var(--emoji); }
+.placer-avec { display: block; font-size: .7em; color: var(--encre-douce); }
+.personnes { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }
+.personne {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-height: 78px; padding: 6px 4px; border: 3px solid var(--ligne); border-radius: 14px;
+  background: var(--surface); color: var(--encre); font-weight: 700; font-size: .9em; text-align: center;
+}
+.personne .visuel { font-size: 1.8em; }
+.personne.choisie { border-color: var(--action); background: var(--lieu-fond, var(--papier)); box-shadow: 0 0 0 3px var(--action); }
+.personne-plus { border-style: dashed; color: var(--action); }
+.personne-plus b { font-size: 1.6em; line-height: 1; }
+.personne-form { display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 3px dashed var(--action); border-radius: 14px; }
+.personne-nom { min-height: 52px; padding: 6px 12px; font-size: 1.2em; border: 2px solid var(--bord); border-radius: 12px; background: var(--papier); color: var(--encre); }
+.personne-emojis { display: flex; flex-wrap: wrap; gap: 6px; }
+.personne-emojis .chip { padding: 0 .6em; }
+.personne-emojis i { font-style: normal; font-family: var(--emoji); font-size: 1.3em; }
+.personne-form .btn { align-self: flex-start; }
+.p-personnes .p-personne > span:first-child { flex: none; }
+.p-personne input[type="text"]:not(.p-emoji) { flex: 1 1 8em; min-height: 44px; padding: 4px 8px; border: 2px solid var(--bord); border-radius: 10px; background: var(--papier); }
+.p-personne .visuel { font-size: 1.6em; }

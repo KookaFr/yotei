@@ -6,15 +6,15 @@
 
 import { choisirCarte } from '../choix-carte.js';
 import {
-  carte, changerLoisirs, estCadreLibre, estLoisir, estSommeil, evenementsDu, mettreDansLibre, modifierJour, noter, nouvelleActivite, oublier,
+  carte, carteDe, changerLoisirs, enleverActivite, estCadreLibre, estLoisir, estSommeil, evenementsDu, mettreDansLibre, modifierJour, noter, nouvelleActivite, oublier,
   prochainsEvenements, routine, sorteDuJour, toutesLesCartes, trierParHeure,
 } from '../donnees.js';
 import {
-  ajouterJours, aujourdhui, cle, deCle, ecartJours, JOURS_SEMAINE, texteDans, texteDuree, versTexte, yomiDans, yomiDate, yomiDuree,
+  ajouterJours, aujourdhui, cle, deCle, ecartJours, JOURS_SEMAINE, texteDans, texteDuree, versMinutes, versTexte, yomiDans, yomiDate, yomiDuree,
 } from '../heure.js';
 import { barre, repereGrandeAiguille, svgHorloge } from '../horloge.js';
 import {
-  AVANT_FIN as AVANT_FIN_COURS, coursEnCours, deroulement, loisirsLus, mochimonoDu, PERIODES,
+  activitesEntre, AVANT_FIN as AVANT_FIN_COURS, coursEnCours, deroulement, loisirsLus, mochimonoDu, PERIODES,
 } from '../journee.js';
 import {
   categorieTemps, composer, liste, questionsCarte, tirer, varDuree,
@@ -54,6 +54,10 @@ export const dateHtml = (d) => `<span class="mot">${d.getMonth() + 1}がつ</spa
 const loisirsHtml = (it, classe = 'loisirs') => (it.loisirs && it.loisirs.length
   ? `<span class="${classe}">${it.loisirs.map((l) => `<span class="loisir"><i aria-hidden="true">${l.emoji || '⭐'}</i>${nomHtml(l)}</span>`).join('')}</span>` : '');
 
+// Avec qui (sauf 「〜と すごす」, où les personnes sont déjà dans le nom) : 「👨 パパと」.
+const avecHtml = (c, classe) => (c.avec && !c.avecQui
+  ? `<span class="${classe}">${c.avec.map((p, i) => `<span class="loisir"><i aria-hidden="true">${p.emoji || '🙂'}</i>${html(`${p.nom}${i === c.avec.length - 1 ? 'と' : ''}`)}</span>`).join('')}</span>` : '');
+
 /* ----- La carte 「いま」 ----- */
 
 function carteMaintenant(d, dr) {
@@ -88,7 +92,7 @@ function carteMaintenant(d, dr) {
 
   const haut = el('div', { class: 'm-haut' });
   haut.innerHTML = `${visuel(c, 'grand')}<div class="m-titre"><p class="m-etiquette">${etiquette}</p>`
-    + `<h2 class="m-nom">${nomHtml(c)}</h2>${loisirsHtml(actuel, 'loisirs m-loisirs')}${plage ? `<p class="m-heures">${plage}</p>` : ''}</div>`;
+    + `<h2 class="m-nom">${nomHtml(c)}</h2>${loisirsHtml(actuel, 'loisirs m-loisirs')}${avecHtml(c, 'loisirs m-loisirs')}${plage ? `<p class="m-heures">${plage}</p>` : ''}</div>`;
   art.append(haut);
 
   const temps = el('div', { class: 'm-temps' });
@@ -233,7 +237,7 @@ function ligneActivite(d, it, { inerte = false } = {}) {
     type: 'button', class: 'act-btn',
     'aria-label': `${it.debut !== null ? `${heureLue(it.debut)}、 ` : ''}${nomLu(c)}${it.loisirs.length ? `（${loisirsLus(it)}）` : ''}${etat ? `、 ${etat}` : ''}`,
     html: `<span class="act-heure">${it.debut !== null ? heureHtml(it.debut) : ''}</span>${visuel(c)}`
-      + `<span class="act-nom">${nomHtml(c)}${loisirsHtml(it, 'loisirs act-loisirs')}</span>`
+      + `<span class="act-nom">${nomHtml(c)}${loisirsHtml(it, 'loisirs act-loisirs')}${avecHtml(c, 'loisirs act-loisirs')}</span>`
       + `<span class="act-etat" aria-hidden="true">${it.fait ? ICONE_COCHE : ''}${it.note && it.note.photo ? '<i class="act-photo">📷</i>' : ''}`
       + `${!it.fait && c.mochimono && c.mochimono.length ? '<i class="act-photo">🎒</i>' : ''}</span>`,
   });
@@ -675,15 +679,20 @@ export function ajouterAuJour(d, { jourFixe = false, apres = null } = {}) {
   const titre = jourFixe ? `${d.getMonth() + 1}がつ ${d.getDate()}にちに 何《なに》を 入《い》れる？` : '何《なに》を 入《い》れる？';
   choisirCarte({
     titre, texteOk: 'つぎ',
-    surChoix: (idCarte) => choisirPlace(d, idCarte, ({ date, apres: placeApres, avant, debut, dans, texte }) => {
+    surChoix: (idCarte) => choisirPlace(d, idCarte, ({
+      date, apres: placeApres, avant, debut, fin, dans, avec, texte,
+    }) => {
       sons.succes();
+      const nomCarte = nomLu(carteDe({ carte: idCarte, avec }));
       if (dans) {
         // Un loisir rangé dans un 自由時間 : il n'a pas d'heure à lui.
         mettreDansLibre(date, dans, idCarte);
-        parler(`${nomLu(carte(idCarte))}を ${lu(texte)}に いれたよ。`);
+        parler(`${nomCarte}を ${lu(texte)}に いれたよ。`);
       } else {
-        inserer(date, idCarte, { apres: placeApres, avant, debut });
-        parler(`${nomLu(carte(idCarte))}を ${lu(texte)}の よていに いれたよ。`);
+        inserer(date, idCarte, {
+          apres: placeApres, avant, debut, fin, avec,
+        });
+        parler(`${nomCarte}を ${lu(texte)}の よていに いれたよ。`);
       }
       if (apres) { apres(date, idCarte); return; }
       if (cle(date) !== cle(d)) message(dans ? `${texte}に 入《い》れたよ。` : `${texte}の 予定《よてい》に 入《い》れたよ。`);
@@ -694,9 +703,34 @@ export function ajouterAuJour(d, { jourFixe = false, apres = null } = {}) {
 }
 
 // Une activité de l'élève : à l'heure choisie (dans l'ordre des heures), ou après / avant une activité.
-export function inserer(d, idCarte, { apres = null, avant = null, debut = '' } = {}) {
+// Avec une heure de fin (activité longue) : ce qui était prévu pendant ce temps est remplacé (gardé dans
+// act.remplace, pour revenir si on l'enlève) ; ce qui commence avant et finirait après est raccourci.
+export function inserer(d, idCarte, {
+  apres = null, avant = null, debut = '', fin = '', avec = [],
+} = {}) {
   modifierJour(d, (liste) => {
-    const act = nouvelleActivite(idCarte, debut, '', true);
+    const act = nouvelleActivite(idCarte, debut, fin, true);
+    if (avec && avec.length) act.avec = [...avec];
+    if (debut && fin) {
+      const de = versMinutes(debut);
+      const a = versMinutes(fin);
+      const items = deroulement(d).items;
+      const remplace = [];
+      activitesEntre(items, de, a).forEach((it) => {
+        const i = liste.findIndex((x) => x.id === it.act.id);
+        if (i < 0) return;
+        remplace.push({ act: { ...liste[i] }, apres: i > 0 ? liste[i - 1].id : null });
+        liste.splice(i, 1);
+      });
+      items.forEach((it) => {
+        const x = liste.find((y) => y.id === it.act.id);
+        const f = versMinutes(it.act.fin);
+        if (!x || it.debutEff === null || it.debutEff >= de || f === null || f <= de) return;
+        remplace.push({ act: { ...x } });
+        x.fin = debut;
+      });
+      if (remplace.length) act.remplace = remplace;
+    }
     if (debut) {
       liste.push(act);
       const triee = trierParHeure(liste);
@@ -819,10 +853,7 @@ function deplacerDans(d, it, cadre) {
 }
 
 function enlever(d, it) {
-  modifierJour(d, (liste) => {
-    const i = liste.findIndex((x) => x.id === it.act.id);
-    if (i >= 0) liste.splice(i, 1);
-  });
+  enleverActivite(d, it.act.id);
   oublier(d, it.act.id);
   fermerFeuille();
   parler('けしたよ。');

@@ -7,7 +7,7 @@
 import { CARTES, LIEUX } from './catalogue.js';
 import { choisirCarte } from './choix-carte.js';
 import {
-  carte, enregistrer, enregistrerCarte, enregistrerJournal, etat, journal, modifierJour, nouvelleActivite, reinitialiser, remplacerEtat,
+  ajouterPersonne, carte, enregistrer, enregistrerCarte, enregistrerJournal, etat, journal, modifierJour, nouvelleActivite, reinitialiser, remplacerEtat,
   retablirJour, supprimerCarte, trierParHeure,
 } from './donnees.js';
 import {
@@ -76,6 +76,7 @@ export function rendreParents() {
     section('calendrier', L('Calendrier : événements et vacances', 'カレンダー：行事と 休み'), blocCalendrier()),
     section('etapes', L('Étapes (てじゅん)', 'てじゅん'), blocRoutines()),
     section('cartes', L('Cartes et photos', 'カードと 写真'), blocCartes()),
+    section('personnes', L('Personnes (「だれと？」)', 'まわりの 人（「だれと？」）'), blocPersonnes()),
     section('messages', L('Messages de 「おわった」', '「おわった」の ことば'), blocMessages()),
     section('ecole', L("Retour de l'école (がっこうの ふりかえり)", '学校の ふりかえり'), blocEcole()),
     section('reglages', L('Réglages', 'せってい'), blocReglages()),
@@ -417,6 +418,51 @@ function blocCartes() {
   return b;
 }
 
+/* ----- Les personnes autour de lui : 「だれと？」 quand il ajoute une activité ----- */
+
+function blocPersonnes() {
+  const b = el('div');
+  b.append(el('p', { class: 'p-aide', text: L(
+    "Quand il ajoute une activité, il peut choisir avec qui (carte « だれかと すごす » : 「パパと すごす」). Il peut aussi écrire un prénom lui-même : il apparaît ici. Une photo du visage aide beaucoup.",
+    '予定を 入れる とき、だれと するかを えらべます（「だれかと すごす」のカード →「パパと すごす」）。子どもが 名前を 書いて ふやす ことも できます。顔の 写真が あると わかりやすいです。',
+  ) }));
+  const ul = el('ul', { class: 'p-liste p-personnes' });
+  etat.personnes.forEach((p, i) => {
+    const apercu = el('span', { class: 'p-avec-visuel', html: visuel(p) });
+    const nom = el('input', { type: 'text', value: p.nom, 'aria-label': L('Nom', '名前') });
+    nom.addEventListener('change', () => { if (nom.value.trim()) { p.nom = nom.value.trim(); enregistrer(); } });
+    const emoji = el('input', { type: 'text', class: 'p-emoji', value: p.emoji || '', maxlength: '8', 'aria-label': L('Émoji', '絵文字') });
+    emoji.addEventListener('change', () => { p.emoji = emoji.value.trim() || '🙂'; enregistrer(); rendreParents(); });
+    const photo = async (source) => {
+      const id = await nouvellePhoto(source, 'personne');
+      if (!id) return;
+      if (p.photo) supprimerPhoto(p.photo);
+      p.photo = id;
+      enregistrer();
+      rendreParents();
+    };
+    ul.append(el('li', { class: 'p-personne' }, apercu, emoji, nom,
+      btnP('📷', () => photo('camera'), 'btn btn-mini'),
+      btnP('🖼️', () => photo('galerie'), 'btn btn-mini'),
+      p.photo ? btnP(L('Sans photo', '写真なし'), () => { supprimerPhoto(p.photo); delete p.photo; enregistrer(); rendreParents(); }, 'btn btn-mini') : '',
+      btnP('✕', () => {
+        if (!window.confirm(L(`Enlever ${lu(p.nom)} de la liste ?`, `${lu(p.nom)}を けしますか？`))) return;
+        if (p.photo) supprimerPhoto(p.photo);
+        etat.personnes.splice(i, 1);
+        enregistrer();
+        rendreParents();
+      }, 'btn btn-mini btn-danger')));
+  });
+  b.append(ul, btnP(L('＋ Ajouter une personne', '＋ 人を たす'), () => {
+    const nom = window.prompt(L('Nom (ex. けんたくん, 健太《けんた》くん)', '名前（例：けんたくん）'));
+    if (!nom || !nom.trim()) return;
+    ajouterPersonne(nom, '🙂');
+    rendreParents();
+  }, 'btn btn-principal'));
+  chargerPhotos(ul);
+  return b;
+}
+
 function editerCarte(c0) {
   const c = { ...c0, mochimono: (c0.mochimono || []).map((a) => ({ ...a })) };
   const base = CARTES.find((x) => x.id === c.id);
@@ -726,6 +772,7 @@ function selectVoix() {
 function idsPhotosEtat() {
   const ids = new Set();
   etat.cartes.forEach((x) => { if (x.photo) ids.add(x.photo); });
+  (etat.personnes || []).forEach((x) => { if (x.photo) ids.add(x.photo); });
   etat.routines.forEach((r) => {
     if (r.photo) ids.add(r.photo);
     r.etapes.forEach((e) => { if (e.photo) ids.add(e.photo); });

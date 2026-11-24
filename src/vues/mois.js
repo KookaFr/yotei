@@ -8,7 +8,7 @@
    ====================================================================== */
 
 import {
-  carte, etat, journalDu, joursAvecPhotos, modeleHabituel, modifierJour, programmeDu, prochainsEvenements, retablirJour, sorteDuJour,
+  carteDe, enleverActivite, etat, journalDu, joursAvecPhotos, modeleHabituel, programmeDu, prochainsEvenements, retablirJour, sorteDuJour,
 } from '../donnees.js';
 import {
   ajouterJours, aujourdhui, cle, deCle, ecartJours, JOURS_SEMAINE, texteDans, versMinutes, yomiDans, yomiDate, yomiMois,
@@ -36,7 +36,7 @@ function marquesDu(d, { ferie, evenements }) {
   evenements.forEach((ev) => res.push({ emoji: ev.emoji || '⭐', nom: ev.nom, sorte: ev.sansEcole ? 'vacances' : 'evenement' }));
   const habituels = etat.jours[cle(d)] ? new Set(modeleHabituel(d).map((a) => a.id)) : null;
   programmeDu(d).forEach((a) => {
-    const c = carte(a.carte);
+    const c = carteDe(a);
     const ajout = Boolean(a.parEleve) || (habituels && !habituels.has(a.id));
     if (!c.important && !ajout) return;
     if (!ajout && res.some((x) => x.nom === c.nom)) return;
@@ -170,10 +170,7 @@ function apresAjout(d) {
 }
 
 function enleverDe(d, m) {
-  modifierJour(d, (liste) => {
-    const i = liste.findIndex((a) => a.id === m.act.id);
-    if (i >= 0) liste.splice(i, 1);
-  });
+  enleverActivite(d, m.act.id);
   // Revenu au programme habituel : la date n'est plus « modifiée ».
   if (JSON.stringify(etat.jours[cle(d)]) === JSON.stringify(modeleHabituel(d))) retablirJour(d);
   sons.succes();

@@ -11,7 +11,7 @@ import {
   aujourdhui, cle, minutesMaintenant, versMinutes,
 } from './heure.js';
 import {
-  carte, journalDu, modeleHabituel, programmeDu, sorteDuJour,
+  carte, carteDe, journalDu, modeleHabituel, programmeDu, sorteDuJour,
 } from './donnees.js';
 import { lu } from './texte.js';
 
@@ -43,7 +43,7 @@ export function deroulement(d, maintenant = minutesMaintenant()) {
   const items = liste.map((act, i) => {
     const note = notes[act.id] || null;
     return {
-      act, carte: carte(act.carte), debut: versMinutes(act.debut), fin: versMinutes(act.fin), note, fait: Boolean(note && note.fait), index: i,
+      act, carte: carteDe(act), debut: versMinutes(act.debut), fin: versMinutes(act.fin), note, fait: Boolean(note && note.fait), index: i,
       loisirs: (act.loisirs || []).map((id) => carte(id)),
     };
   });
@@ -185,3 +185,9 @@ export function recitDe(it) {
   const phrases = it.loisirs.map((l) => l.recit || `${l.nom}を しました。`);
   return `${c.nom}に ${phrases.join(' ')}`;
 }
+
+/* ----- Une activité longue (パパと すごす 10:00〜18:00) remplace ce qui était prévu pendant ce temps ----- */
+
+// Les activités qui commencent dans [debut, fin[ (pas celles qui sont faites, ni 寝る).
+export const activitesEntre = (items, debut, fin) => items
+  .filter((it) => it.debutEff !== null && it.debutEff >= debut && it.debutEff < fin && !it.fait && !it.carte.sommeil);
