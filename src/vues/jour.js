@@ -6,7 +6,7 @@
 
 import { choisirCarte } from '../choix-carte.js';
 import {
-  evenementsDu, modifierJour, noter, nouvelleActivite, oublier, prochainsEvenements,
+  carte, evenementsDu, modifierJour, noter, nouvelleActivite, oublier, prochainsEvenements, trierParHeure,
   routine, sorteDuJour,
 } from '../donnees.js';
 import {
@@ -14,7 +14,7 @@ import {
 } from '../heure.js';
 import { barre, repereGrandeAiguille, svgHorloge } from '../horloge.js';
 import {
-  AVANT_FIN as AVANT_FIN_COURS, coursEnCours, deroulement, indexPeriode, mochimonoDu, PERIODES,
+  AVANT_FIN as AVANT_FIN_COURS, coursEnCours, deroulement, mochimonoDu, PERIODES,
 } from '../journee.js';
 import {
   categorieTemps, composer, liste, questionsCarte, tirer, varDuree,
@@ -23,6 +23,7 @@ import { nav } from '../nav.js';
 import {
   aEnvoyer, lancerEcole, proposerEcole, remettreAPlusTard,
 } from './ecole.js';
+import { choisirPlace } from './placer.js';
 import { el } from '../outils.js';
 import { chargerPhotos, nouvellePhoto, supprimerPhoto } from '../photos.js';
 import { reglages } from '../reglages.js';
@@ -515,34 +516,31 @@ function oublierFait(d, it) {
 /* ----- L'élève change sa journée ----- */
 
 function ajouter(d) {
+  // D'abord quoi (la carte), puis quand et où (「いつ する？」).
   choisirCarte({
-    titre: '何《なに》を 入《い》れる？',
-    quand: { date: d },
-    surChoix: (idCarte, { date, moment, texte }) => {
-      inserer(date, idCarte, moment);
-      const c = deroulement(date).items.find((x) => x.act.parEleve && x.act.carte === idCarte);
+    titre: '何《なに》を 入《い》れる？', texteOk: 'つぎ',
+    surChoix: (idCarte) => choisirPlace(d, idCarte, ({ date, apres, avant, debut, texte }) => {
+      inserer(date, idCarte, { apres, avant, debut });
       sons.succes();
-      parler(`${c ? nomLu(c.carte) : ''}を ${lu(texte)}に いれたよ。`);
-      if (cle(date) !== cle(d)) message(`${texte}に 入《い》れたよ。`);
+      parler(`${nomLu(carte(idCarte))}を ${lu(texte)}の よていに いれたよ。`);
+      if (cle(date) !== cle(d)) message(`${texte}の 予定《よてい》に 入《い》れたよ。`);
       nav.rafraichir();
-    },
+    }),
   });
 }
 
-// Une activité de l'élève : juste après celle en cours (「つぎ」), ou à la fin d'un moment de la journée.
-export function inserer(d, idCarte, moment) {
-  const dr = deroulement(d);
+// Une activité de l'élève : à l'heure choisie (dans l'ordre des heures), ou après / avant une activité.
+export function inserer(d, idCarte, { apres = null, avant = null, debut = '' } = {}) {
   modifierJour(d, (liste) => {
-    const act = nouvelleActivite(idCarte, '', '', true);
-    const iActuel = dr.aujourdhui && dr.actuel ? liste.findIndex((x) => x.id === dr.actuel.act.id) : -1;
-    let i;
-    if (moment === 'apres') i = iActuel >= 0 ? iActuel + 1 : liste.length;
-    else {
-      const ip = indexPeriode(moment);
-      const premier = dr.items.find((it) => indexPeriode(it.periode) > ip);
-      i = premier ? liste.findIndex((x) => x.id === premier.act.id) : liste.length;
-      if (iActuel >= 0 && i <= iActuel) i = iActuel + 1;
+    const act = nouvelleActivite(idCarte, debut, '', true);
+    if (debut) {
+      liste.push(act);
+      const triee = trierParHeure(liste);
+      liste.splice(0, liste.length, ...triee);
+      return;
     }
+    let i = liste.length;
+    if (apres) { const j = liste.findIndex((x) => x.id === apres); if (j >= 0) i = j + 1; } else if (avant) { const j = liste.findIndex((x) => x.id === avant); if (j >= 0) i = j; }
     liste.splice(i, 0, act);
   });
 }

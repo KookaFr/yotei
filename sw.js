@@ -9,7 +9,7 @@ const FICHIERS = [
   './src/app.js', './src/catalogue.js', './src/choix-carte.js', './src/donnees.js', './src/heure.js', './src/horloge.js',
   './src/journee.js', './src/micro.js', './src/nav.js', './src/outils.js', './src/parents.js', './src/photos.js', './src/plateforme.js',
   './src/reglages.js', './src/tactile.js', './src/texte.js', './src/ui.js', './src/voix.js',
-  './src/messages.js', './src/vues/ecole.js', './src/vues/etapes.js', './src/vues/jour.js', './src/vues/mois.js', './src/vues/recit.js', './src/vues/semaine.js',
+  './src/messages.js', './src/vues/ecole.js', './src/vues/etapes.js', './src/vues/jour.js', './src/vues/mois.js', './src/vues/placer.js', './src/vues/recit.js', './src/vues/semaine.js',
 ];
 
 self.addEventListener('install', (ev) => {

@@ -107,6 +107,17 @@ export function lancerEcole(d, apres = () => {}, { depart = null } = {}) {
     ...rep.autres.map((a) => ({ id: `c:${a.carte}`, carte: carte(a.carte), texte: carte(a.carte).nom })),
   ];
 
+  // Ce qu'il a choisi avant, pour le redire dans la question suivante.
+  const optionChoisie = (id) => [...faitsOptions(), ...QUAND_AUTRES].find((o) => o.id === id) || null;
+  const nomChoisi = (id) => (optionChoisie(id) ? optionChoisie(id).texte : '');
+  const emojiChoisi = (id) => { const o = optionChoisie(id); return o ? (o.carte ? o.carte.emoji : o.emoji) : '😥'; };
+  const quandTexte = () => {
+    const id = rep.souciQuand;
+    if (!id || id === 'nsp') return '';
+    if (id === 'pause') return '休《やす》み時間《じかん》に ';
+    if (id === 'trajet') return '行《い》き 帰《かえ》りに ';
+    return `${nomChoisi(id)}の とき、 `;
+  };
   const moments = PERIODES.map((p) => ({ p, items: ecole.filter((it) => it.periode === p.id) })).filter((x) => x.items.length);
   const etapes = [
     { id: 'intro' },
@@ -123,15 +134,20 @@ export function lancerEcole(d, apres = () => {}, { depart = null } = {}) {
     {
       id: 'prefere', si: () => detail && faitsOptions().length > 0, q: 'いちばん 楽《たの》しかった ことは？', type: 'un', cle: 'prefere',
       options: () => [...faitsOptions(), { id: 'aucun', emoji: '🤔', texte: 'とくに ない' }],
-      micro: { cle: 'prefere', texte: 'どうして？ こえで おしえて。', si: () => rep.prefere && rep.prefere !== 'aucun' },
+      micro: { cle: 'prefere', texte: () => `どうして ${nomChoisi(rep.prefere)}が 楽《たの》しかった？ こえで おしえて。`, si: () => rep.prefere && rep.prefere !== 'aucun' },
     },
     { id: 'souci', q: 'こまった ことや いやな ことは あった？', type: 'un', cle: 'souci', options: () => SOUCI },
     {
-      id: 'souciQuand', si: () => detail && rep.souci === 'oui', q: 'それは いつ？', type: 'un', cle: 'souciQuand',
+      id: 'souciQuand', si: () => detail && rep.souci === 'oui', q: 'こまった ことや いやな ことが あったのは いつ？', type: 'un', cle: 'souciQuand',
+      rappel: () => ({ emoji: '😥', texte: 'こまった こと： あった' }),
       options: () => [...faitsOptions(), ...QUAND_AUTRES],
-      micro: { cle: 'souci', texte: '何《なに》が あったの？ こえで おしえて。' },
+      micro: { cle: 'souci', texte: () => `${quandTexte()}何《なに》が あったの？ こえで おしえて。` },
     },
-    { id: 'souciProf', si: () => detail && rep.souci === 'oui', q: '先生《せんせい》に 言《い》った？', type: 'un', cle: 'souciProf', options: () => PROF },
+    {
+      id: 'souciProf', si: () => detail && rep.souci === 'oui', q: 'その こまった ことを 先生《せんせい》に 言《い》った？', type: 'un', cle: 'souciProf',
+      rappel: () => (rep.souciQuand ? { emoji: emojiChoisi(rep.souciQuand), texte: `${quandTexte()}こまった ことが あった` } : { emoji: '😥', texte: 'こまった こと： あった' }),
+      options: () => PROF,
+    },
     {
       id: 'rapporte', si: () => detail, q: '持《も》って 帰《かえ》った ものは ある？', aide: 'ぜんぶ おしてね。 なければ 「つぎ」。', type: 'plusieurs', cle: 'rapporte',
       options: () => {
@@ -149,7 +165,8 @@ export function lancerEcole(d, apres = () => {}, { depart = null } = {}) {
   const actives = () => etapes.filter((e) => !e.si || e.si());
 
   let i = 0;
-  let retourRelire = false;   // on corrige une réponse depuis la relecture : 「つぎ」 y ramène
+  let retourRelire = false;    // on corrige une réponse depuis la relecture : 「つぎ」 y ramène
+  let annonce = null;          // la dernière question dite par la voix
   const ecran = el('section', { class: 'lecteur ecole' });
   const tete = el('header', { class: 'lecteur-tete' });
   const quitter = el('button', { type: 'button', class: 'btn-rond', 'aria-label': 'おわる', html: ICONE_FERMER });
@@ -170,7 +187,16 @@ export function lancerEcole(d, apres = () => {}, { depart = null } = {}) {
     if (e.id === 'relire') return relire();
     if (e.id === 'fin') return fin();
     const zone = el('div', { class: 'ecole-question' });
-    zone.append(el('p', { class: 'ecole-q', 'data-lire': lu(e.q), html: `${e.emoji ? `<i aria-hidden="true">${e.emoji}</i>` : ''}<span>${html(e.q)}</span>` }));
+    // La réponse d'avant, rappelée au-dessus de la question (「😥 こまった こと： あった」).
+    const r = e.rappel && e.rappel();
+    if (r) zone.append(el('p', { class: 'ecole-rappel', 'data-lire': lu(r.texte), html: `<i aria-hidden="true">${r.emoji}</i><span>${html(r.texte)}</span>` }));
+    const q = typeof e.q === 'function' ? e.q() : e.q;
+    zone.append(el('p', { class: 'ecole-q', 'data-lire': lu(q), html: `${e.emoji ? `<i aria-hidden="true">${e.emoji}</i>` : ''}<span>${html(q)}</span>` }));
+    // La voix pose la question en arrivant sur l'écran (pas après chaque toucher).
+    if (annonce !== e.id) {
+      annonce = e.id;
+      parler(`${r ? `${lu(r.texte)}。 ` : ''}${lu(q)}`);
+    }
     if (e.aide) zone.append(el('p', { class: 'ecole-aide', 'data-lire': lu(e.aide), html: html(e.aide) }));
     const grille = el('div', { class: 'ecole-choix' });
     const options = e.options ? e.options() : [];
@@ -227,7 +253,8 @@ export function lancerEcole(d, apres = () => {}, { depart = null } = {}) {
     if (options.length || e.type === 'faits') zone.append(grille);
     // 🎤 : la réponse avec sa voix (facultatif).
     if (e.micro && voixActive() && (!e.micro.si || e.micro.si())) {
-      if (e.micro.texte) zone.append(el('p', { class: 'ecole-aide', 'data-lire': lu(e.micro.texte), html: html(e.micro.texte) }));
+      const tm = typeof e.micro.texte === 'function' ? e.micro.texte() : e.micro.texte;
+      if (tm) zone.append(el('p', { class: 'ecole-aide ecole-aide-micro', 'data-lire': lu(tm), html: html(tm) }));
       zone.append(boutonMicro(rep.voix[e.micro.cle] || null, (id) => { rep.voix[e.micro.cle] = id; }));
     }
     corps.replaceChildren(zone);
@@ -257,6 +284,7 @@ export function lancerEcole(d, apres = () => {}, { depart = null } = {}) {
 
   // Relire avant d'envoyer : 「これで いい？」 ; 「なおす」 → quelle ligne → la question, puis retour ici.
   function relire() {
+    annonce = null;
     const lignes = lignesResume(rep, ecole, 'enfant');
     const zone = el('div', { class: 'ecole-fin' });
     zone.append(el('p', { class: 'ecole-q', 'data-lire': 'これで いい？', html: `<i aria-hidden="true">🔎</i><span>${html('これで いい？')}</span>` }));

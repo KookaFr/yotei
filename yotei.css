@@ -985,3 +985,25 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .ecole-ligne i { font-style: normal; font-family: var(--emoji); font-size: 1.5em; }
 .btn-line { background: #06c755; border-color: #06c755; color: #fff; }
 .etape .btn { margin-top: 6px; }
+.ecole-rappel { display: inline-flex; align-self: flex-start; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; background: var(--surface); border: 2px solid var(--bord); font-weight: 700; }
+.ecole-rappel i { font-style: normal; font-family: var(--emoji); font-size: 1.3em; }
+.ecole-aide-micro { font-size: 1.1em; color: var(--encre); }
+
+/* 「いつ する？」 : la place d'une activité ajoutée */
+.placer { display: flex; flex-direction: column; gap: 8px; }
+.placer-carte { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 16px; background: var(--lieu-fond); border: 3px solid var(--lieu); }
+.placer-nom { font-size: 1.4em; font-weight: 700; }
+.places { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.place-act { display: grid; grid-template-columns: 4.4em auto 1fr; align-items: center; gap: 8px; min-height: 52px; padding: 4px 10px 4px 6px; border-left: 8px solid var(--lieu); border-radius: 12px; background: var(--surface); border-top: 2px solid var(--ligne); border-right: 2px solid var(--ligne); border-bottom: 2px solid var(--ligne); font-weight: 700; }
+.place { width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 3px dashed var(--action); border-radius: 12px; background: transparent; color: var(--action); font-weight: 700; }
+.place > span[aria-hidden] { font-size: 1.3em; }
+.place.choisie { border-style: solid; background: var(--action); padding: 4px; }
+.place-fantome { flex: 1; display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; background: var(--lieu-fond); color: var(--encre); border-left: 8px solid var(--lieu); font-weight: 700; }
+.place-fantome small { margin-left: auto; color: var(--encre-douce); }
+.placer-heure { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 6px; }
+.placer-heure .btn i { font-style: normal; font-family: var(--emoji); }
+.placer-heure .btn-rond b { font-size: 1.6em; }
+.placer-heure-valeur { display: flex; flex-direction: column; align-items: center; font-size: 1.5em; font-weight: 700; min-width: 5em; }
+.placer-heure-valeur small { font-size: .5em; color: var(--encre-douce); }
+.placer-heure .p-aide { width: 100%; margin: 0; }
+.places-heure { opacity: .45; }
