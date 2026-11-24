@@ -585,7 +585,6 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
   .mj-m-nom { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .mj-ferie .mj-m-nom { color: var(--dimanche); }
 }
-}
 
 /* ---------- てじゅん ---------- */
 

@@ -45,12 +45,38 @@ function modulesManquants() {
   return lister('src').filter((f) => !sw.includes(`'./${f}'`));
 }
 
+// La feuille de style : une accolade en trop ou en moins fait ignorer la règle suivante par le navigateur
+// (v19 : la grille de てじゅん avait disparu). On compte les blocs du fichier, puis les règles que le navigateur a lues.
+function blocsCss() {
+  const css = fs.readFileSync(path.join(__dirname, '..', 'yotei.css'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '').replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, '""');
+  let niveau = 0;
+  let blocs = 0;
+  for (const ch of css) {
+    if (ch === '{') { niveau += 1; blocs += 1; }
+    if (ch === '}') { niveau -= 1; if (niveau < 0) return { erreur: 'accolade fermante en trop' }; }
+  }
+  if (niveau !== 0) return { erreur: `${niveau} accolade(s) non fermée(s)` };
+  return { blocs };
+}
+const reglesLues = (page) => page.evaluate(() => {
+  const compter = (regles) => [...regles].reduce((n, r) => n + 1 + (r.cssRules ? compter(r.cssRules) : 0), 0);
+  const feuille = [...document.styleSheets].find((f) => f.href && f.href.includes('yotei.css'));
+  return feuille ? compter(feuille.cssRules) : -1;
+});
+
 (async () => {
   const manquants = modulesManquants();
   if (manquants.length) {
     console.log(`Absents de sw.js : ${manquants.join(', ')}`);
     process.exit(1);
   }
+  const css = blocsCss();
+  if (css.erreur) {
+    console.log(`yotei.css : ${css.erreur}`);
+    process.exit(1);
+  }
+  let cssVerifiee = false;
   const proc = await serveur();
   const navigateur = await chromium.launch();
   const problemes = [];
@@ -64,6 +90,11 @@ function modulesManquants() {
         await page.clock.install({ time: new Date(moment) });
         await page.goto(URL);
         await page.waitForTimeout(400);
+        if (!cssVerifiee) {
+          cssVerifiee = true;
+          const lues = await reglesLues(page);
+          if (lues !== css.blocs) problemes.push(`yotei.css : ${css.blocs} blocs dans le fichier, ${lues} règles lues par le navigateur (une règle est ignorée)`);
+        }
         const verifier = async (ou) => {
           ecrans += 1;
           const r = await controler(page);
