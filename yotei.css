@@ -524,18 +524,28 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
   background: var(--surface);
   font-weight: 700;
 }
-.p-emoji { font-family: var(--emoji); font-size: 1.5em; }
-.p-date { color: var(--encre-douce); }
-.p-dans { color: var(--action); white-space: nowrap; }
-.mois { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.pr-emoji { font-family: var(--emoji); font-size: 1.5em; }
+.pr-nom { min-width: 0; }
+.pr-date { color: var(--encre-douce); }
+.pr-dans { color: var(--action); white-space: nowrap; }
+/* Le calendrier remplit la hauteur de l'écran (5 ou 6 semaines) : des cases plus grandes, avec de la place pour les icônes. */
+.mois {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: auto;
+  grid-auto-rows: 84px;
+  grid-auto-rows: clamp(60px, calc((100vh - 330px) / var(--semaines, 5) - 4px), 150px);
+  grid-auto-rows: clamp(60px, calc((100dvh - 330px) / var(--semaines, 5) - 4px), 150px);
+  gap: 4px;
+}
 .mois-js { text-align: center; font-weight: 700; color: var(--jour, var(--encre-douce)); padding: 4px 0; }
 .mois-jour {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
-  min-height: 64px;
+  gap: 2px;
+  min-height: 0;
   padding: 4px 2px;
   border: 2px solid var(--ligne);
   border-radius: 12px;
@@ -546,19 +556,35 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .mois-jour.ferie { color: var(--dimanche); }
 .mois-jour.sans-ecole { background: var(--papier); }
 .mois-jour.hors-mois { opacity: .35; }
-.mois-jour.passe:not(.aujourdhui) .mj-num { opacity: .6; }
+.mois-jour.passe:not(.aujourdhui) .mj-num, .mois-jour.passe:not(.aujourdhui) .mj-marques { opacity: .6; }
 .mois-jour.aujourdhui { border: 4px solid var(--action); }
-.mj-num { font-size: 1.15em; font-weight: 700; }
-.mj-evs { display: flex; flex-wrap: wrap; justify-content: center; }
-.mj-ev i { font-style: normal; font-family: var(--emoji); font-size: 1.15em; }
-.mj-ev-nom, .mj-ferie { display: none; }
+.mj-num { font-size: 1.2em; font-weight: 700; line-height: 1.1; }
+/* Les icônes : 2 par ligne sur téléphone (jusqu'à 4), avec le nom sur grand écran. */
+.mj-marques { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); justify-items: center; align-content: center; align-items: center; gap: 2px; width: 100%; }
+.mj-m { display: flex; align-items: center; justify-content: center; min-width: 0; }
+.mj-m i { font-style: normal; font-family: var(--emoji); font-size: min(1.35em, 4.8vw); line-height: 1.1; }
+/* Une seule icône : grande, au milieu. Deux : l'une sous l'autre. Petit écran : un peu plus petites. */
+.mj-n1 { grid-template-columns: 1fr; }
+.mj-n1 .mj-m i { font-size: min(2em, 7.4vw); }
+.mj-n2 { grid-template-columns: 1fr; }
+.mj-n2 .mj-m i { font-size: min(1.5em, 6vw); }
+@media (max-height: 700px) and (max-width: 759px) {
+  .mj-num { font-size: 1.05em; }
+  .mj-m i { font-size: min(1.05em, 4.6vw); }
+  .mj-n1 .mj-m i { font-size: min(1.6em, 7vw); }
+  .mj-n2 .mj-m i { font-size: min(1.15em, 5.5vw); }
+}
+.mj-m-nom { display: none; }
+.mj-plus { font-size: .8em; font-weight: 700; color: var(--encre-douce); }
 .mj-photo { position: absolute; top: 2px; right: 3px; font-size: .7em; font-family: var(--emoji); }
 @media (min-width: 760px) {
-  .mois-jour { min-height: 92px; align-items: flex-start; padding: 6px 8px; }
-  .mj-evs { flex-direction: column; align-items: flex-start; }
-  .mj-ev { display: flex; gap: 4px; align-items: center; color: var(--encre); font-size: .8em; font-weight: 700; text-align: left; }
-  .mj-ev-nom { display: inline; }
-  .mj-ferie { display: block; font-size: .7em; font-weight: 700; text-align: left; line-height: 1.2; }
+  .mois-jour { align-items: flex-start; padding: 6px 8px; }
+  .mj-marques, .mj-n1, .mj-n2 { grid-template-columns: 1fr; justify-items: start; align-content: start; gap: 3px; }
+  .mj-m { justify-content: flex-start; gap: 4px; max-width: 100%; color: var(--encre); font-size: .8em; font-weight: 700; text-align: left; line-height: 1.2; }
+  .mj-m i, .mj-n1 .mj-m i, .mj-n2 .mj-m i { font-size: 1.35em; }
+  .mj-m-nom { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mj-ferie .mj-m-nom { color: var(--dimanche); }
+}
 }
 
 /* ---------- てじゅん ---------- */
@@ -679,6 +705,11 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .pp-question { font-size: 1.5em; font-weight: 700; }
 .proposer-photo .actions-feuille { width: 100%; }
 .detail-evs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 1.2em; font-weight: 700; }
+.detail-evs li { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 14px; background: var(--lieu-fond, var(--papier)); border-left: 8px solid var(--lieu, var(--bord)); }
+.detail-evs .visuel, .de-emoji { font-family: var(--emoji); font-size: 1.4em; flex: none; }
+.de-nom { flex: 1; min-width: 0; }
+.de-heure { color: var(--encre-douce); font-size: .85em; white-space: nowrap; }
+.de-ferie { --lieu: var(--dimanche); color: var(--dimanche); }
 
 /* Choisir une carte */
 .choix-carte { display: flex; flex-direction: column; gap: 10px; }

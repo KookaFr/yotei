@@ -1,25 +1,40 @@
 /* ======================================================================
    「こんげつ」 : le calendrier du mois (dimanche en rouge, samedi en bleu, comme au Japon),
    les jours fériés, les événements, et « あと 3にち » pour les prochains.
+   Dans chaque jour, en icônes, ce qu'il ne faut pas oublier : jour férié (🎌), événements du calendrier,
+   activités marquées « importantes » (遠足, 実習, 病院…) — pas les activités ordinaires.
    Toucher un jour : ce qui s'y passe, et son programme (ou sa ふりかえり s'il est passé).
    ====================================================================== */
 
 import {
-  journalDu, joursAvecPhotos, prochainsEvenements, sorteDuJour,
+  carte, journalDu, joursAvecPhotos, programmeDu, prochainsEvenements, sorteDuJour,
 } from '../donnees.js';
 import {
-  ajouterJours, aujourdhui, cle, deCle, ecartJours, JOURS_SEMAINE, texteDans, yomiDans, yomiDate, yomiMois,
+  ajouterJours, aujourdhui, cle, deCle, ecartJours, JOURS_SEMAINE, texteDans, versMinutes, yomiDans, yomiDate, yomiMois,
 } from '../heure.js';
 import { nav } from '../nav.js';
 import { el } from '../outils.js';
-import { reglages } from '../reglages.js';
 import { activable } from '../tactile.js';
 import { html, lu } from '../texte.js';
 import {
-  bouton, fermerFeuille, ICONE_DROITE, ICONE_GAUCHE, ICONE_PHOTO, ouvrirFeuille,
+  bouton, fermerFeuille, heureHtml, heureLue, ICONE_DROITE, ICONE_GAUCHE, ICONE_PHOTO, ouvrirFeuille, visuel,
 } from '../ui.js';
 
 let decalage = 0;
+
+// Ce qu'il ne faut pas oublier ce jour-là (dans l'ordre : férié, événements, activités importantes).
+function marquesDu(d, { ferie, evenements }) {
+  const res = [];
+  if (ferie) res.push({ emoji: '🎌', nom: ferie, sorte: 'ferie' });
+  evenements.forEach((ev) => res.push({ emoji: ev.emoji || '⭐', nom: ev.nom, sorte: ev.sansEcole ? 'vacances' : 'evenement' }));
+  programmeDu(d).forEach((a) => {
+    const c = carte(a.carte);
+    if (!c.important || res.some((x) => x.nom === c.nom)) return;
+    res.push({ emoji: c.emoji || '⭐', nom: c.nom, sorte: 'activite', debut: versMinutes(a.debut), carte: c });
+  });
+  return res;
+}
+const MAX_ICONES = 4;
 
 export function rendreMois(conteneur) {
   const auj = aujourdhui();
@@ -37,20 +52,21 @@ export function rendreMois(conteneur) {
   );
   page.append(tete);
 
-  // Les prochains événements, avec le nombre de jours.
+  // Les prochains événements, avec le nombre de jours (sous le calendrier).
   const prochains = prochainsEvenements(auj, 3, 120);
+  let ulProchains = null;
   if (prochains.length) {
     const ul = el('ul', { class: 'prochains' });
+    ulProchains = ul;
     prochains.forEach((ev) => {
       const d = deCle(ev.date);
       const n = Math.max(0, ecartJours(auj, d));
       ul.append(el('li', {
         'data-lire': `${lu(ev.nom)}。 ${yomiDate(d)}。 ${yomiDans(n)}`,
-        html: `<span class="p-emoji" aria-hidden="true">${ev.emoji || '⭐'}</span><span class="p-nom">${html(ev.nom)}</span>`
-          + `<span class="p-date">${d.getMonth() + 1}/${d.getDate()}</span><span class="p-dans">${html(texteDans(n))}</span>`,
+        html: `<span class="pr-emoji" aria-hidden="true">${ev.emoji || '⭐'}</span><span class="pr-nom">${html(ev.nom)}</span>`
+          + `<span class="pr-date">${d.getMonth() + 1}/${d.getDate()}</span><span class="pr-dans">${html(texteDans(n))}</span>`,
       }));
     });
-    page.append(ul);
   }
 
   const grille = el('div', { class: 'mois', role: 'grid' });
@@ -58,10 +74,13 @@ export function rendreMois(conteneur) {
   const debutGrille = ajouterJours(premier, -premier.getDay());
   const photos = joursAvecPhotos();
   const nbSemaines = Math.ceil((premier.getDay() + new Date(premier.getFullYear(), premier.getMonth() + 1, 0).getDate()) / 7);
+  grille.style.setProperty('--semaines', nbSemaines);
   for (let i = 0; i < nbSemaines * 7; i++) {
     const d = ajouterJours(debutGrille, i);
     const horsMois = d.getMonth() !== premier.getMonth();
-    const { ferie, evenements, sansEcole } = sorteDuJour(d);
+    const sorte = sorteDuJour(d);
+    const { ferie, sansEcole } = sorte;
+    const marques = horsMois ? [] : marquesDu(d, sorte);
     const k = cle(d);
     const estAuj = k === cle(auj);
     const classes = ['mois-jour', `jour-${d.getDay()}`];
@@ -70,32 +89,41 @@ export function rendreMois(conteneur) {
     if (ferie) classes.push('ferie');
     if (sansEcole) classes.push('sans-ecole');
     if (k < cle(auj)) classes.push('passe');
+    // Au plus 4 icônes ; au-delà, 3 icônes et « +2 ».
+    const montrees = marques.length > MAX_ICONES ? marques.slice(0, MAX_ICONES - 1) : marques;
+    const reste = marques.length - montrees.length;
     const b = el('button', {
       type: 'button', class: classes.join(' '),
-      'aria-label': `${yomiDate(d)}${ferie ? `、 ${lu(ferie)}` : ''}${evenements.map((ev) => `、 ${lu(ev.nom)}`).join('')}`,
+      'aria-label': `${yomiDate(d)}${marques.map((m) => `、 ${lu(m.nom)}`).join('')}`,
       html: `<span class="mj-num">${d.getDate()}</span>`
-        + `<span class="mj-evs">${evenements.slice(0, 2).map((ev) => `<span class="mj-ev"><i aria-hidden="true">${ev.emoji || '⭐'}</i><span class="mj-ev-nom">${html(ev.nom)}</span></span>`).join('')}</span>`
-        + `${ferie && !horsMois ? `<span class="mj-ferie">${html(ferie)}</span>` : ''}`
+        + `<span class="mj-marques mj-n${Math.min(3, montrees.length + (reste ? 1 : 0))}">${montrees.map((m) => `<span class="mj-m mj-${m.sorte}"><i aria-hidden="true">${m.emoji}</i>`
+          + `<span class="mj-m-nom">${html(m.nom)}</span></span>`).join('')}${reste ? `<span class="mj-plus">+${reste}</span>` : ''}</span>`
         + `${photos.has(k) ? '<span class="mj-photo" aria-hidden="true">📷</span>' : ''}`,
     });
     activable(b, () => ouvrirDate(d));
     grille.append(b);
   }
   page.append(grille);
+  if (ulProchains) page.append(ulProchains);
   conteneur.replaceChildren(page);
 }
 
 function ouvrirDate(d) {
-  const { ferie, evenements } = sorteDuJour(d);
   const contenu = el('div', { class: 'detail-date' });
-  const lignes = [];
-  if (ferie && reglages.feries) lignes.push({ e: '🎌', t: ferie });
-  evenements.forEach((ev) => lignes.push({ e: ev.emoji || '⭐', t: ev.nom }));
-  if (lignes.length) {
+  const marques = marquesDu(d, sorteDuJour(d));
+  if (marques.length) {
     const ul = el('ul', { class: 'detail-evs' });
-    lignes.forEach((l) => ul.append(el('li', { 'data-lire': lu(l.t), html: `<span aria-hidden="true">${l.e}</span> ${html(l.t)}` })));
+    marques.forEach((m) => {
+      const heure = m.debut !== null && m.debut !== undefined;
+      ul.append(el('li', {
+        class: `de-${m.sorte}${m.carte ? ` lieu-${m.carte.lieu}` : ''}`, 'data-lire': `${lu(m.nom)}${heure ? `。 ${heureLue(m.debut)}から` : ''}`,
+        html: `${m.carte ? visuel(m.carte) : `<span class="de-emoji" aria-hidden="true">${m.emoji}</span>`}<span class="de-nom">${html(m.nom)}</span>`
+          + `${heure ? `<span class="de-heure">${heureHtml(m.debut)}</span>` : ''}`,
+      }));
+    });
     contenu.append(ul);
   }
+  const lignes = marques.map((m) => ({ t: m.nom }));
   const k = cle(d);
   const passe = k < cle(aujourdhui());
   const actions = el('div', { class: 'actions-feuille' });
