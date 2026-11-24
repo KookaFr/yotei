@@ -1133,11 +1133,24 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 
 /* 「いつ する？」 : heures rondes à toucher, fin, et ce qui sera remplacé */
 .placer-heure > .cq-label { width: 100%; margin: 4px 0 0; }
-.puces-heures { width: 100%; }
-.puces-heures .chip { flex: none; min-width: 4.8em; }
-.puces-heures .chip span { font-family: inherit; }
-.puces-heures .chip .heure small { display: block; font-size: .6em; line-height: 1; }
-.placer-reglage { display: flex; align-items: center; gap: 10px; }
+/* Les heures : une grille par moment de la journée, toute visible ; puis les minutes. */
+.placer-bloc-heure { width: 100%; display: flex; flex-direction: column; gap: 8px; padding: 8px 10px; border: 2px solid var(--ligne); border-radius: 14px; scroll-margin-top: 70px; }
+.placer-bloc-heure.en-reglage { border: 3px solid var(--action); }
+.pbh-tete { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.pbh-titre { min-width: 4.5em; font-weight: 700; }
+.pbh-tete .placer-heure-valeur { min-width: 0; align-items: flex-start; font-size: 1.35em; }
+.pbh-tete .btn { margin-left: auto; }
+.grille-heures { display: flex; flex-direction: column; gap: 6px; }
+.gh-ligne { display: grid; grid-template-columns: 3.4em 1fr; align-items: center; gap: 6px; }
+.gh-moment { display: flex; flex-direction: column; align-items: center; font-size: .8em; font-weight: 700; color: var(--encre-douce); line-height: 1.1; }
+.gh-moment i { font-style: normal; font-family: var(--emoji); font-size: 1.35em; }
+.gh-heures { display: grid; grid-template-columns: repeat(auto-fill, minmax(3.1em, 1fr)); gap: 6px; }
+.gh-heures .chip, .gh-minutes .chip { min-height: 46px; padding: 0 .15em; font-size: .95em; }
+.gh-heures .chip span { font-family: inherit; }
+.gh-minutes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.gh-minutes .chip { font-size: .95em; }
+.gh-minutes .chip:disabled, .gh-heures .chip:disabled { opacity: .35; }
+.pbh-actions { margin: 0; }
 .placer-fin i { font-style: normal; font-family: var(--emoji); }
 .placer-remplace { width: 100%; padding: 8px 12px; border: 3px dashed var(--bord); border-radius: 14px; background: var(--papier); }
 .placer-remplace p { margin: 0 0 6px; font-weight: 700; }
@@ -1167,3 +1180,4 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .p-personnes .p-personne > span:first-child { flex: none; }
 .p-personne input[type="text"]:not(.p-emoji) { flex: 1 1 8em; min-height: 44px; padding: 4px 8px; border: 2px solid var(--bord); border-radius: 10px; background: var(--papier); }
 .p-personne .visuel { font-size: 1.6em; }
+@media (max-width: 359px) { .gh-minutes .chip { font-size: .78em; } .gh-ligne { grid-template-columns: 2.8em 1fr; } }

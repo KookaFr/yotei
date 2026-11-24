@@ -37,6 +37,8 @@ export function choisirPlace(dDepart, idCarte, surFin, { jourFixe = false } = {}
   let place = null;        // { apres } | { avant } | { fin: true }
   let heure = null;        // minutes, ou null (sans heure)
   let fin = null;          // minutes : heure de fin (activité longue), ou null
+  let regle = 'debut';     // la grille montrée : 'debut' ou 'fin'
+  let aMontrer = false;    // faire défiler la feuille jusqu'à la grille de la fin
   let dans = null;         // id du 自由時間 choisi (loisir)
   let autre = false;       // 「べつの じかん」 : choisir une place comme pour une autre activité
   let avec = [];           // ids des personnes (「だれと？」)
@@ -67,23 +69,53 @@ export function choisirPlace(dDepart, idCarte, surFin, { jourFixe = false } = {}
     } else moment = periodeDe(minutesMaintenant()).id;
   }
 
-  // Les heures rondes, à toucher (une rangée qui défile) : 「ごご 6:00」.
-  const puces = (valeur, min, choisir) => {
-    const rangee = el('div', { class: 'cq-chips puces-heures' });
-    for (let h = Math.ceil(min / 60); h <= 23; h++) {
-      const on = Math.floor(valeur / 60) === h;
-      const b = el('button', {
-        type: 'button', class: `chip${on ? ' chip-on' : ''}`, 'aria-pressed': String(on), 'aria-label': heureLue(h * 60), html: heureHtml(h * 60),
+  // Les heures, toutes visibles, rangées par moment de la journée (🌅 6 7 8 9 / ☀️ 10 11 12 1 / 🌤️ 2 3 4 5 / 🌙 6 … 11),
+  // puis les minutes en un seul toucher (ちょうど, 15ふん, 30ぷん, 45ふん). min : la plus petite valeur possible.
+  const RANGEES = [
+    { p: PERIODES[0], de: 6, a: 9 }, { p: PERIODES[1], de: 10, a: 13 },
+    { p: PERIODES[2], de: 14, a: 17 }, { p: PERIODES[3], de: 18, a: 23 },
+  ];
+  const grilleHeures = (valeur, min, choisir) => {
+    const grille = el('div', { class: 'grille-heures' });
+    RANGEES.forEach(({ p, de, a }) => {
+      const heures = [];
+      for (let h = de; h <= a; h++) if (h * 60 + 45 >= min) heures.push(h);
+      if (!heures.length) return;
+      const ligne = el('div', { class: 'gh-ligne' });
+      ligne.append(el('span', { class: 'gh-moment', 'aria-hidden': 'true', html: `<i>${p.emoji}</i>${html(p.nom, { mots: false })}` }));
+      const boutons = el('div', { class: 'gh-heures' });
+      heures.forEach((h) => {
+        const on = valeur !== null && Math.floor(valeur / 60) === h;
+        const b = el('button', {
+          type: 'button', class: `chip${on ? ' chip-on' : ''}`, 'aria-pressed': String(on), 'aria-label': heureLue(h * 60),
+          html: heureHtml(h * 60, { sansMoment: true }),
+        });
+        // L'heure touchée garde les minutes déjà choisies (sans passer sous le minimum).
+        activable(b, () => choisir(Math.max(min, h * 60 + (valeur !== null ? valeur % 60 : 0))), { garde: false });
+        boutons.append(b);
       });
-      activable(b, () => choisir(h * 60), { garde: false });
-      rangee.append(b);
-    }
-    return rangee;
+      ligne.append(boutons);
+      grille.append(ligne);
+    });
+    return grille;
   };
-  const reglage = (valeur, choisir, lire) => el('div', { class: 'placer-reglage' },
-    bouton('15ふん まえ', () => choisir(valeur - 15), { classe: 'btn-rond', icone: '<b aria-hidden="true">−</b>' }),
-    el('span', { class: 'placer-heure-valeur', 'data-lire': `${lire} ${heureLue(valeur)}`, html: `${heureHtml(valeur)}<small>${heureLue(valeur)}</small>` }),
-    bouton('15ふん あと', () => choisir(valeur + 15), { classe: 'btn-rond', icone: '<b aria-hidden="true">＋</b>' }));
+  const MINUTES = [[0, 'ちょうど'], [15, '15ふん'], [30, '30ぷん'], [45, '45ふん']];
+  const grilleMinutes = (valeur, min, choisir) => {
+    const ligne = el('div', { class: 'gh-minutes' });
+    MINUTES.forEach(([m, texte]) => {
+      const v = Math.floor(valeur / 60) * 60 + m;
+      const on = valeur % 60 === m;
+      const b = el('button', { type: 'button', class: `chip${on ? ' chip-on' : ''}`, 'aria-pressed': String(on), 'aria-label': texte, html: html(texte, { mots: false }) });
+      if (v < min) b.disabled = true;
+      else activable(b, () => choisir(v), { garde: false });
+      ligne.append(b);
+    });
+    return ligne;
+  };
+  // La valeur choisie, en grand : 「ごご 6:00」 et sa lecture.
+  const valeurHeure = (valeur, lire) => el('span', {
+    class: 'placer-heure-valeur', 'data-lire': `${lire} ${heureLue(valeur)}`, html: `${heureHtml(valeur)}<small>${heureLue(valeur)}</small>`,
+  });
 
   const fantome = () => el('span', { class: `place-fantome lieu-${c.lieu}`, html: `${visuel(c)}<span>${nomHtml(c)}</span>${heure !== null ? `<small>${heureHtml(heure)}</small>` : ''}` });
   const memePlace = (p) => place && p && ((p.apres && p.apres === place.apres) || (p.avant && p.avant === place.avant) || (p.fin && place.fin));
@@ -286,16 +318,17 @@ export function choisirPlace(dDepart, idCarte, surFin, { jourFixe = false } = {}
       });
       contenu.append(liste);
 
-      // L'heure, si on veut : des heures rondes à toucher (− / ＋ pour les quarts d'heure). Puis, si on veut, la fin
-      // (activité longue : パパと すごす 10:00〜18:00 ; ce qui était prévu pendant ce temps est remplacé).
+      // L'heure, si on veut, puis la fin (activité longue : パパと すごす 10:00〜18:00 ; ce qui était prévu pendant ce
+      // temps est remplacé). Une seule grille à la fois : celle qu'on règle (le début, ou la fin).
       const ligneHeure = el('div', { class: 'placer-heure' });
       if (heure === null) {
         ligneHeure.append(bouton('時間《じかん》も きめる', () => {
           const p = PERIODES.find((x) => x.id === moment);
           heure = Math.max(p.debut, auj() ? Math.ceil(minutesMaintenant() / 15) * 15 : p.debut);
           place = null;
+          regle = 'debut';
           dessiner();
-          parler(`${heureLue(heure)}。`);
+          parler(`${heureLue(heure)}。 はじまりの じかんを えらんでね。`);
         }, { classe: 'btn', icone: '<i aria-hidden="true">🕐</i>' }));
       } else {
         const minDebut = auj() ? Math.ceil(minutesMaintenant() / 15) * 15 : 6 * 60;
@@ -306,30 +339,44 @@ export function choisirPlace(dDepart, idCarte, surFin, { jourFixe = false } = {}
           dessiner();
           parler(heureLue(heure));
         };
-        ligneHeure.append(
-          el('p', { class: 'cq-label', 'data-lire': 'はじまり', html: html('はじまり') }),
-          puces(heure, minDebut, changerDebut),
-          reglage(heure, changerDebut, 'はじまり'),
-          bouton('時間《じかん》なし', () => { heure = null; fin = null; dessiner(); }, { classe: 'btn btn-petit' }),
-        );
+        const changerFin = (m) => {
+          fin = Math.min(23 * 60 + 45, Math.max(heure + 15, m));
+          dessiner();
+          parler(`${heureLue(fin)}まで。`);
+        };
+        // Le début.
+        const blocDebut = el('div', { class: `placer-bloc-heure${regle === 'debut' ? ' en-reglage' : ''}` });
+        const teteDebut = el('div', { class: 'pbh-tete' }, el('span', { class: 'pbh-titre', html: html('はじまり') }), valeurHeure(heure, 'はじまり'));
+        if (regle === 'debut') {
+          blocDebut.append(teteDebut, grilleHeures(heure, minDebut, changerDebut), grilleMinutes(heure, minDebut, changerDebut));
+          blocDebut.append(el('div', { class: 'p-ligne pbh-actions' },
+            bouton('時間《じかん》なし', () => { heure = null; fin = null; dessiner(); }, { classe: 'btn btn-petit' })));
+        } else {
+          teteDebut.append(bouton('かえる', () => { regle = 'debut'; dessiner(); }, { classe: 'btn btn-petit' }));
+          blocDebut.append(teteDebut);
+        }
+        ligneHeure.append(blocDebut);
+        // La fin.
         if (fin === null) {
           ligneHeure.append(bouton('おわりの 時間《じかん》も きめる', () => {
             fin = Math.min(23 * 60 + 45, heure + 60);
+            regle = 'fin';
+            aMontrer = true;
             dessiner();
-            parler(`${heureLue(fin)}まで。`);
+            parler(`${heureLue(fin)}まで。 おわりの じかんを えらんでね。`);
           }, { classe: 'btn placer-fin', icone: '<i aria-hidden="true">🏁</i>' }));
         } else {
-          const changerFin = (m) => {
-            fin = Math.min(23 * 60 + 45, Math.max(heure + 15, m));
-            dessiner();
-            parler(`${heureLue(fin)}まで。`);
-          };
-          ligneHeure.append(
-            el('p', { class: 'cq-label', 'data-lire': 'おわり', html: html('おわり') }),
-            puces(fin, heure + 15, changerFin),
-            reglage(fin, changerFin, 'おわり'),
-            bouton('おわり なし', () => { fin = null; dessiner(); }, { classe: 'btn btn-petit' }),
-          );
+          const blocFin = el('div', { class: `placer-bloc-heure${regle === 'fin' ? ' en-reglage' : ''}` });
+          const teteFin = el('div', { class: 'pbh-tete' }, el('span', { class: 'pbh-titre', html: html('おわり') }), valeurHeure(fin, 'おわり'));
+          if (regle === 'fin') {
+            blocFin.append(teteFin, grilleHeures(fin, heure + 15, changerFin), grilleMinutes(fin, heure + 15, changerFin));
+            blocFin.append(el('div', { class: 'p-ligne pbh-actions' },
+              bouton('おわり なし', () => { fin = null; regle = 'debut'; dessiner(); }, { classe: 'btn btn-petit' })));
+          } else {
+            teteFin.append(bouton('かえる', () => { regle = 'fin'; aMontrer = true; dessiner(); }, { classe: 'btn btn-petit' }));
+            blocFin.append(teteFin);
+          }
+          ligneHeure.append(blocFin);
           // Ce qui était prévu pendant ce temps : remplacé.
           const remplaces = activitesEntre(deroulement(jour).items, heure, fin);
           if (remplaces.length) {
@@ -347,11 +394,16 @@ export function choisirPlace(dDepart, idCarte, surFin, { jourFixe = false } = {}
     }
   }
 
-  // Les heures choisies au milieu de leur rangée.
-  const centrer = () => requestAnimationFrame(() => contenu.querySelectorAll('.puces-heures .chip-on').forEach((b) => {
-    const r = b.parentElement;
-    r.scrollLeft = b.offsetLeft - r.offsetLeft - (r.clientWidth - b.offsetWidth) / 2;
-  }));
+  // Quand on passe à la fin : la feuille défile jusqu'à sa grille.
+  const centrer = () => {
+    if (!aMontrer) return;
+    aMontrer = false;
+    requestAnimationFrame(() => {
+      const g = contenu.querySelector('.placer-bloc-heure.en-reglage');
+      if (g) g.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
+  };
+
   dessiner();
   ouvrirFeuille({ titre: 'いつ する？', contenu, classe: 'feuille-haute' });
   parler(`${nomLu(c)}は いつ する？`);
