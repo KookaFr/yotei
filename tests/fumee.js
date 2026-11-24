@@ -102,7 +102,28 @@ function modulesManquants() {
           await ajout.click();
           await page.waitForTimeout(200);
           await verifier('いれる');
-          await page.keyboard.press('Escape');
+          // Ajouter テレビ à la fin d'un moment, puis la déplacer dans la liste (mode 「うごかす」).
+          await page.locator('.tuile-carte', { hasText: 'テレビ' }).click();
+          await page.locator('.choix-pied .btn').click();
+          await page.waitForTimeout(150);
+          await page.locator('.placer .place').last().click();
+          await page.locator('.placer .choix-pied .btn').click();
+          await page.waitForTimeout(250);
+          const tele = page.locator('.liste-jour .act-btn', { hasText: 'テレビ' });
+          if (await tele.count()) {
+            await tele.first().click();
+            await page.waitForTimeout(200);
+            await page.locator('.actions-feuille .btn', { hasText: 'うごかす' }).click();
+            await page.waitForTimeout(300);
+            await verifier('うごかす');
+            if (!(await page.locator('.bandeau-deplacer').count())) problemes.push(`${nom} ${moment} : pas de mode うごかす`);
+            const cases = page.locator('.liste-deplacement .place');
+            if (await cases.count()) {
+              await cases.first().click();
+              await page.waitForTimeout(300);
+              if (await page.locator('.bandeau-deplacer').count()) problemes.push(`${nom} ${moment} : うごかす ne se ferme pas`);
+            } else await page.locator('.bandeau-deplacer .btn').click();
+          }
         }
         const fait = page.locator('.maintenant .btn-fait');
         if (await fait.count()) {

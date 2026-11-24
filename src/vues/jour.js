@@ -31,7 +31,7 @@ import { activable } from '../tactile.js';
 import { html, lu } from '../texte.js';
 import {
   bouton, fermerFeuille, heureHtml, heureLue, ICONE_BAS, ICONE_COCHE, ICONE_ETAPES, ICONE_GALERIE, ICONE_GAUCHE, ICONE_HAUT,
-  ICONE_HP, ICONE_PHOTO, ICONE_PLUS, ICONE_POUBELLE, ICONE_RETOUR, message, nomHtml, nomLu, ouvrirFeuille, plageHtml, plageLue,
+  ICONE_DEPLACER, ICONE_FERMER, ICONE_HP, ICONE_PHOTO, ICONE_PLUS, ICONE_POUBELLE, ICONE_RETOUR, message, nomHtml, nomLu, ouvrirFeuille, plageHtml, plageLue,
   visuel,
 } from '../ui.js';
 import { lireElement, parler, sons } from '../voix.js';
@@ -191,9 +191,9 @@ function encadresMochimono(d, dr) {
 
 /* ----- La liste de la journée ----- */
 
-function ligneActivite(d, it) {
+function ligneActivite(d, it, { inerte = false } = {}) {
   const c = it.carte;
-  const li = el('li', { class: `act statut-${it.statut} lieu-${c.lieu}` });
+  const li = el('li', { class: `act statut-${it.statut} lieu-${c.lieu}`, 'data-act': it.act.id });
   const etat = { fait: 'おわった', maintenant: 'いま', passe: '', avenir: '' }[it.statut];
   const b = el('button', {
     type: 'button', class: 'act-btn',
@@ -203,7 +203,8 @@ function ligneActivite(d, it) {
       + `<span class="act-etat" aria-hidden="true">${it.fait ? ICONE_COCHE : ''}${it.note && it.note.photo ? '<i class="act-photo">📷</i>' : ''}`
       + `${!it.fait && c.mochimono && c.mochimono.length ? '<i class="act-photo">🎒</i>' : ''}</span>`,
   });
-  activable(b, () => ouvrirActivite(d, it));
+  // Pendant un déplacement, les lignes ne s'ouvrent pas : on touche seulement les cases 「＋ ここ」.
+  if (inerte) { b.tabIndex = -1; b.classList.add('act-inerte'); } else activable(b, () => ouvrirActivite(d, it));
   li.append(b);
   return li;
 }
@@ -239,6 +240,22 @@ export function rendreJour(conteneur, d = aujourdhui(), { retour = null } = {}) 
     tete.append(bouton('もどる', retour, { classe: 'btn btn-petit', icone: ICONE_GAUCHE }));
     tete.append(el('h2', { class: 'titre-date', 'data-lire': yomiDate(d), html: dateHtml(d) }));
     page.append(tete);
+  }
+  // Mode « déplacement » : la liste à venir, avec les cases 「＋ ここ」.
+  if (aDeplacer && aDeplacer.date === k) {
+    const it = dr.items.find((x) => x.act.id === aDeplacer.id);
+    if (it) {
+      const tete = el('div', { class: `bandeau-deplacer lieu-${it.carte.lieu}`, 'data-lire': `${nomLu(it.carte)}を どこに うごかす？` });
+      tete.innerHTML = `<div class="bd-haut">${visuel(it.carte)}<p class="bd-q"><span>${html(`${it.carte.nom}を どこに うごかす？`)}</span></p></div>`;
+      const bas = el('div', { class: 'bd-bas', html: `<small>${html('「＋ ここ」を おしてね。')}</small>` });
+      bas.append(bouton('やめる', arreterDeplacement, { classe: 'btn btn-petit', icone: ICONE_FERMER }));
+      tete.append(bas);
+      page.append(tete, listeDeplacement(d, dr));
+      conteneur.replaceChildren(page);
+      chargerPhotos(page);
+      return page;
+    }
+    aDeplacer = null;
   }
   const bandeau = bandeauEvenements(d);
   if (bandeau) page.append(bandeau);
@@ -496,9 +513,8 @@ function ouvrirActivite(d, it) {
     actions.append(bouton(courant.note && courant.note.photo ? '写真《しゃしん》を かえる' : '写真《しゃしん》', () => prendrePhoto(d, courant, 'camera'), { classe: 'btn', icone: ICONE_PHOTO }));
     actions.append(bouton('えらぶ', () => prendrePhoto(d, courant, 'galerie'), { classe: 'btn', icone: ICONE_GALERIE }));
   }
-  if (!dr.passe && peutDeplacer() && courant.debut === null) {
-    actions.append(bouton('まえへ', () => deplacer(d, courant, -1), { classe: 'btn', icone: ICONE_HAUT }));
-    actions.append(bouton('あとへ', () => deplacer(d, courant, 1), { classe: 'btn', icone: ICONE_BAS }));
+  if (!dr.passe && peutDeplacer() && (courant.debut === null || courant.act.parEleve)) {
+    actions.append(bouton('うごかす', () => commencerDeplacement(d, courant), { classe: 'btn', icone: ICONE_DEPLACER }));
   }
   if (!dr.passe && peutAjouter() && courant.act.parEleve) {
     actions.append(bouton('けす', () => enlever(d, courant), { classe: 'btn btn-danger', icone: ICONE_POUBELLE }));
@@ -547,16 +563,87 @@ export function inserer(d, idCarte, { apres = null, avant = null, debut = '' } =
   });
 }
 
-function deplacer(d, it, sens) {
-  modifierJour(d, (liste) => {
-    const i = liste.findIndex((x) => x.id === it.act.id);
-    const j = i + sens;
-    if (i < 0 || j < 0 || j >= liste.length) return;
-    [liste[i], liste[j]] = [liste[j], liste[i]];
-  });
-  parler(sens < 0 ? 'まえに うごかしたよ。' : 'あとに うごかしたよ。');
+/* ----- Déplacer une activité : directement dans la liste, avec des cases 「＋ ここ」 ----- */
+
+let aDeplacer = null;   // { date: 'AAAA-MM-JJ', id } pendant qu'on choisit la nouvelle place
+
+function commencerDeplacement(d, it) {
+  aDeplacer = { date: cle(d), id: it.act.id };
   fermerFeuille();
   nav.rafraichir();
+  montrerActivite(it.act.id);
+  parler(`${nomLu(it.carte)}を どこに うごかす？ プラスを おしてね。`);
+}
+
+function arreterDeplacement() {
+  const id = aDeplacer && aDeplacer.id;
+  aDeplacer = null;
+  nav.rafraichir();
+  montrerActivite(id);
+}
+
+// Faire voir une activité de la liste (au milieu de l'écran), et la faire briller un instant après un déplacement.
+function montrerActivite(id, { briller = false } = {}) {
+  if (!id) return;
+  const li = document.querySelector(`.page-jour li[data-act="${id}"]`);
+  if (!li) return;
+  try { li.scrollIntoView({ block: 'center', behavior: reglages.animationsReduites ? 'auto' : 'smooth' }); } catch { li.scrollIntoView(); }
+  if (briller) li.classList.add('vient-de-bouger');
+}
+
+// Les cases : avant chaque activité à venir (pas juste autour de celle qu'on déplace, ni avant celle en cours), et à la fin.
+function listeDeplacement(d, dr) {
+  const items = dr.items.filter((it) => it.statut === 'maintenant' || it.statut === 'avenir' || it.act.id === aDeplacer.id);
+  const iMoi = items.findIndex((it) => it.act.id === aDeplacer.id);
+  const moi = items[iMoi];
+  const bloc = el('div', { class: 'moments liste-deplacement' });
+  const caseIci = (cible, lire) => {
+    const li = el('li', { class: 'place-case' });
+    const b = el('button', { type: 'button', class: 'place', 'aria-label': lire, html: `<span aria-hidden="true">＋</span>${html('ここ')}` });
+    activable(b, () => deplacerVers(d, moi, cible), { garde: false });
+    li.append(b);
+    return li;
+  };
+  let ol = null;
+  let periode = null;
+  items.forEach((it, k) => {
+    if (it.periode !== periode) {
+      periode = it.periode;
+      const p = PERIODES.find((x) => x.id === periode);
+      bloc.append(el('h3', { class: 'moment-titre', 'data-lire': lu(p.nom), html: `<span class="moment-emoji" aria-hidden="true">${p.emoji}</span>${html(p.nom)}` }));
+      ol = el('ol', { class: 'liste-jour' });
+      bloc.append(ol);
+    }
+    const inutile = k === iMoi || k === iMoi + 1 || it.statut === 'maintenant';
+    if (!inutile) ol.append(caseIci({ avant: it.act.id }, `${nomLu(it.carte)}の まえ`));
+    const li = ligneActivite(d, it, { inerte: true });
+    if (k === iMoi) {
+      li.classList.add('en-deplacement');
+      li.querySelector('.act-etat').innerHTML = `<i class="act-ici">${ICONE_DEPLACER}</i>`;
+    }
+    ol.append(li);
+  });
+  if (iMoi !== items.length - 1 && ol) ol.append(caseIci({ fin: true }, 'さいご'));
+  return bloc;
+}
+
+function deplacerVers(d, it, cible) {
+  modifierJour(d, (liste) => {
+    const i = liste.findIndex((x) => x.id === it.act.id);
+    if (i < 0) return;
+    const [act] = liste.splice(i, 1);
+    // Une activité déplacée suit sa nouvelle place : elle n'a plus d'heure fixe.
+    act.debut = '';
+    act.fin = '';
+    const j = cible.avant ? liste.findIndex((x) => x.id === cible.avant) : -1;
+    if (j >= 0) liste.splice(j, 0, act);
+    else liste.push(act);
+  });
+  aDeplacer = null;
+  sons.succes();
+  parler(`${nomLu(it.carte)}を うごかしたよ。`);
+  nav.rafraichir();
+  montrerActivite(it.act.id, { briller: true });
 }
 
 function enlever(d, it) {
