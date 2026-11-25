@@ -359,6 +359,8 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .periode-nom { font-size: .8em; color: var(--action); }
 .periode-dates, .periode-mois { font-size: clamp(1.05em, 5vw, 1.3em); white-space: nowrap; }
 .periode-dates .mot { word-break: keep-all; overflow-wrap: anywhere; }
+/* ふりかえり : la date entière (« 11がつ 25にち（すいようび） ») passe sur deux lignes plutôt que sous les flèches. */
+.page-recit .periode-dates { white-space: normal; text-wrap: balance; }
 .periode-annee { font-size: .8em; color: var(--encre-douce); }
 .btn-fleche { width: 56px; height: 56px; }
 .filtres { display: flex; gap: 8px; justify-content: center; margin: 10px 0; }
@@ -1188,3 +1190,6 @@ body.mode-lecture button:not(.btn-lire) { box-shadow: 0 0 0 3px var(--action) in
 .p-personne input[type="text"]:not(.p-emoji) { flex: 1 1 8em; min-height: 44px; padding: 4px 8px; border: 2px solid var(--bord); border-radius: 10px; background: var(--papier); }
 .p-personne .visuel { font-size: 1.6em; }
 @media (max-width: 359px) { .gh-minutes .chip { font-size: .78em; } .gh-ligne { grid-template-columns: 2.8em 1fr; } }
+
+/* Les pictogrammes dessinés (src/objets.js) prennent la taille du texte, comme les emoji qu'ils remplacent. */
+.objet-dessin { display: inline-block; width: 1.2em; height: 1.2em; vertical-align: -.22em; overflow: visible; }   /* un emoji occupe un peu plus que 1em */

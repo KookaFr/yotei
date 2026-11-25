@@ -11,6 +11,7 @@
    Tout reste sur l'appareil : aucun compte, aucune donnée envoyée.
    ========================================================================== */
 
+import { installerDessins } from './objets.js';
 import {
   journalDu, photosAnciennes, sorteDuJour, surChangement,
 } from './donnees.js';
@@ -40,6 +41,9 @@ import {
   choisirDateRecit, definirRafraichir, diaporama, rendreRecit,
 } from './vues/recit.js';
 import { remettreSemaine, rendreSemaine } from './vues/semaine.js';
+
+// Les pictogrammes dessinés remplacent les emoji du système dès le premier affichage.
+installerDessins();
 
 const ONGLETS = {
   jour: { nom: '今日《きょう》', icone: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/>' },
