@@ -42,8 +42,10 @@ import {
 } from './vues/recit.js';
 import { remettreSemaine, rendreSemaine } from './vues/semaine.js';
 
-// Les pictogrammes dessinés remplacent les emoji du système dès le premier affichage.
-installerDessins();
+// Les pictogrammes dessinés (src/objets.js) sont en attente : plusieurs n'étaient pas compréhensibles.
+// En attendant de meilleurs dessins, l'appli affiche les emoji du système. Pour les remettre : installerDessins().
+const DESSINS_ACTIFS = false;
+if (DESSINS_ACTIFS) installerDessins();
 
 const ONGLETS = {
   jour: { nom: '今日《きょう》', icone: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/>' },
